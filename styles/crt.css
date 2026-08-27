@@ -1,0 +1,261 @@
+/* ============================================================================
+   EFFETS CRT, BOOT, STATIQUE, VEILLE, MODE CINEMA
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------- */
+/* Boot screen                                                             */
+/* ---------------------------------------------------------------------- */
+
+.boot-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: #000;
+  color: #7cff8f;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1em;
+  font-family: var(--font-display);
+  text-align: center;
+  transition: opacity 0.6s ease;
+}
+.boot-screen--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.boot-screen[hidden] {
+  display: none;
+}
+.boot-screen__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #7cff8f;
+  box-shadow: 0 0 20px 6px rgba(124, 255, 143, 0.7);
+  animation: boot-pulse 1.2s ease-in-out infinite;
+}
+@keyframes boot-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.6);
+  }
+}
+.boot-screen__text {
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+}
+.boot-screen__hint {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  opacity: 0.7;
+}
+.boot-screen__ellipsis {
+  display: inline-block;
+  animation: boot-dots 1.4s steps(4) infinite;
+  overflow: hidden;
+  width: 1.2em;
+  vertical-align: bottom;
+}
+@keyframes boot-dots {
+  from {
+    width: 0;
+  }
+  to {
+    width: 1.2em;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* CRT screen effects                                                      */
+/* ---------------------------------------------------------------------- */
+
+.crt-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.18) 0px,
+    rgba(0, 0, 0, 0.18) 1px,
+    transparent 2px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+  animation: crt-flicker 6s infinite;
+}
+@keyframes crt-flicker {
+  0%,
+  96%,
+  100% {
+    opacity: 1;
+  }
+  97% {
+    opacity: 0.82;
+  }
+  98% {
+    opacity: 1;
+  }
+  99% {
+    opacity: 0.9;
+  }
+}
+
+.crt-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+  box-shadow: inset 0 0 40px 10px rgba(0, 0, 0, 0.6);
+}
+
+.tv-screen--off .crt-overlay,
+.tv-screen--off .crt-vignette {
+  opacity: 0;
+}
+
+/* Statique / neige au changement de chaîne */
+.static-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background-color: #888;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.06) 0px, transparent 1px, transparent 2px),
+    repeating-conic-gradient(#000 0% 25%, #fff 0% 50%);
+  background-size: 100% 100%, 3px 3px;
+  animation: static-noise 0.08s steps(2) infinite;
+}
+@keyframes static-noise {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 0 0, 3px 3px;
+  }
+}
+
+/* Bandeau nom / numéro de chaîne */
+.channel-banner {
+  position: absolute;
+  top: 6%;
+  left: 6%;
+  z-index: 15;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+  background: rgba(0, 0, 0, 0.55);
+  border-left: 4px solid var(--accent);
+  padding: 0.3em 0.6em;
+  font-family: var(--font-display);
+  color: #fff;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.channel-banner--visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+.channel-banner__num {
+  font-size: 1rem;
+  color: var(--accent);
+}
+.channel-banner__name {
+  font-size: 0.65rem;
+}
+
+/* Extinction façon vieux téléviseur : l'écran se réduit en un point puis noir */
+.power-off-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: #000;
+  pointer-events: none;
+}
+.power-off-overlay.power-off--playing {
+  animation: power-off-shrink 0.5s ease-in forwards;
+}
+@keyframes power-off-shrink {
+  0% {
+    clip-path: inset(0% 0% 0% 0%);
+    opacity: 1;
+  }
+  70% {
+    clip-path: inset(49.5% 2% 49.5% 2%);
+    opacity: 1;
+  }
+  100% {
+    clip-path: inset(50% 0% 50% 0%);
+    opacity: 1;
+  }
+}
+
+/* Écran de veille (screensaver) : le canvas est affiché/masqué directement
+   par scripts/screensaver.js (display block/none) ; l'overlay transparent
+   par-dessus sert juste à capter le clic qui referme la veille. */
+.screensaver-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+.screensaver-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Mode cinéma plein écran (double-clic sur l'écran)                       */
+/* ---------------------------------------------------------------------- */
+
+.cinema-mode .wallpaper,
+.cinema-mode .window,
+.cinema-mode .light-switch,
+.cinema-mode .shelf,
+.cinema-mode .plant,
+.cinema-mode .media-console,
+.cinema-mode .rug,
+.cinema-mode .sofa {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.cinema-mode .tv-unit {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(94vw, 125vh);
+  z-index: 1000;
+}
+.cinema-mode .tv-legs,
+.cinema-mode .tv-settings-btn,
+.cinema-mode .tv-set__brand {
+  display: none;
+}
+.cinema-mode .tv-set__frame {
+  border-radius: 10px;
+  padding: 1.5%;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Focus visible global (accessibilité clavier)                            */
+/* ---------------------------------------------------------------------- */
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
