@@ -76,7 +76,10 @@ const Storage = {
   },
   addCustomChannel(channel) {
     const list = this.getCustomChannels();
-    list.push(channel);
+    const maxDefault = window.DEFAULT_CHANNELS.reduce((max, c) => Math.max(max, c.number), 0);
+    const maxCustom = list.reduce((max, c) => Math.max(max, c.number || 0), 0);
+    const number = Math.max(maxDefault, maxCustom) + 1;
+    list.push({ ...channel, number });
     this.setCustomChannels(list);
     return list;
   },
@@ -86,19 +89,13 @@ const Storage = {
     return list;
   },
   /**
-   * Fusionne les chaînes par défaut (config.js) avec les chaînes
-   * personnalisées de l'utilisateur, en re-numérotant proprement.
+   * Fusionne la chaîne par défaut (config.js) avec les chaînes
+   * personnalisées de l'utilisateur (numéro assigné et persisté dès l'ajout).
    */
   getAllChannels() {
     const defaults = window.DEFAULT_CHANNELS.map((c) => ({ ...c }));
-    const custom = this.getCustomChannels();
-    let nextNumber = defaults.reduce((max, c) => Math.max(max, c.number), 0) + 1;
-    const numberedCustom = custom.map((c) => {
-      const number = c.number || nextNumber++;
-      if (!c.number) nextNumber = number + 1;
-      return { ...c, number, isCustom: true };
-    });
-    return defaults.concat(numberedCustom);
+    const custom = this.getCustomChannels().map((c) => ({ ...c, isCustom: true }));
+    return defaults.concat(custom);
   },
 };
 

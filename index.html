@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Le Salon — 2000</title>
+<title>My Childhood TV</title>
 <meta name="description" content="Un salon des années 2000 en full-screen, avec une vraie télé YouTube pilotable à la télécommande." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,9 +23,9 @@
 
 <main id="room" class="room room--day">
 
-  <div class="wallpaper" data-depth="3" aria-hidden="true"></div>
+  <div class="wallpaper" aria-hidden="true"></div>
 
-  <div class="window" data-depth="6" aria-hidden="true">
+  <div class="window" aria-hidden="true">
     <div class="window__sky"></div>
     <div class="window__cross window__cross--v"></div>
     <div class="window__cross window__cross--h"></div>
@@ -36,7 +36,7 @@
 
   <button id="light-switch" class="light-switch" data-blip aria-pressed="false" aria-label="Interrupteur : basculer entre jour et nuit">💡</button>
 
-  <div class="shelf shelf--left" data-depth="5" aria-hidden="true">
+  <div class="shelf shelf--left" aria-hidden="true">
     <div class="frame frame--1"><div class="frame__photo"></div></div>
     <div class="frame frame--2"><div class="frame__photo"></div></div>
     <div class="vhs-stack">
@@ -46,7 +46,7 @@
     </div>
   </div>
 
-  <div class="shelf shelf--right" data-depth="5" aria-hidden="true">
+  <div class="shelf shelf--right" aria-hidden="true">
     <div class="frame frame--3"><div class="frame__photo"></div></div>
     <div id="lava-lamp" class="lava-lamp" data-blip tabindex="0" role="button" aria-label="Lampe à lave, cliquer pour l'animer">
       <div class="lava-lamp__glass">
@@ -59,7 +59,7 @@
     </div>
   </div>
 
-  <div class="plant" data-depth="8" aria-hidden="true">
+  <div class="plant" aria-hidden="true">
     <div class="plant__pot"></div>
     <div class="plant__leaf l1"></div>
     <div class="plant__leaf l2"></div>
@@ -67,58 +67,46 @@
     <div class="plant__leaf l4"></div>
   </div>
 
-  <div class="tv-unit" data-depth="2">
+  <div class="tv-unit">
     <div class="tv-set">
       <div class="tv-set__frame">
         <div id="tv-screen" class="tv-screen">
           <div id="player" class="tv-player"></div>
-          <div class="crt-overlay" aria-hidden="true"></div>
-          <div class="crt-vignette" aria-hidden="true"></div>
           <canvas id="screensaver-canvas" class="screensaver-canvas"></canvas>
           <div id="screensaver-overlay" class="screensaver-overlay" hidden aria-hidden="true"></div>
           <div id="static-overlay" class="static-overlay" hidden aria-hidden="true"></div>
           <div id="channel-banner" class="channel-banner">
-            <span id="channel-banner-number" class="channel-banner__num">01</span>
-            <span id="channel-banner-name" class="channel-banner__name">MTV Hits 2000</span>
+            <span id="channel-banner-name" class="channel-banner__name"></span>
           </div>
           <div id="power-off-overlay" class="power-off-overlay" hidden aria-hidden="true"></div>
         </div>
-        <div class="tv-set__brand">SALONVISION 2000</div>
+        <div class="tv-set__brand">MY CHILDHOOD TV</div>
       </div>
-      <button id="settings-toggle" class="tv-settings-btn" data-blip aria-label="Réglages : ajouter une chaîne personnalisée">⚙</button>
+      <button id="settings-toggle" class="tv-settings-btn" data-blip aria-label="Réglages : choisir ou ajouter une chaîne personnalisée">⚙</button>
     </div>
     <div class="tv-legs" aria-hidden="true"></div>
   </div>
 
-  <div class="media-console" data-depth="1" aria-hidden="true">
+  <div class="media-console" aria-hidden="true">
     <div class="vcr">
       <div class="vcr__slot"></div>
-      <div id="wall-clock" class="vcr__clock" data-blip tabindex="0" role="button" aria-label="Horloge clignotante du magnétoscope, cliquer pour l'affoler">
-        <span class="vcr__clock-text">12:00</span>
+      <div id="wall-clock" class="vcr__clock" data-blip tabindex="0" role="button" aria-label="Horloge du magnétoscope">
+        <span class="vcr__clock-text">--:--</span>
       </div>
     </div>
   </div>
 
-  <div class="rug" data-depth="1" aria-hidden="true"></div>
+  <div class="rug" aria-hidden="true"></div>
 
-  <div class="sofa" data-depth="12" aria-hidden="true">
+  <div class="sofa" aria-hidden="true">
     <div class="sofa__cushion c1"></div>
     <div class="sofa__cushion c2"></div>
     <div class="sofa__cushion c3"></div>
-    <div id="sofa-cat" class="sofa-cat" data-blip tabindex="0" role="button" aria-label="Chat endormi sur le canapé, cliquer pour le réveiller">🐈</div>
   </div>
+
+  <div id="room-cat" class="room-cat" data-blip tabindex="0" role="button" aria-label="Chat du salon, cliquer pour le réveiller">🐈</div>
 
 </main>
-
-<div id="epg-overlay" class="epg-overlay" hidden>
-  <div class="epg-panel" role="dialog" aria-modal="true" aria-label="Guide des programmes">
-    <div class="panel-header">
-      <h2>📺 Guide des programmes</h2>
-      <button id="epg-close" class="icon-btn" data-blip aria-label="Fermer le guide">✕</button>
-    </div>
-    <ul id="epg-list" class="epg-list"></ul>
-  </div>
-</div>
 
 <div id="settings-modal" class="settings-modal" hidden>
   <div class="settings-panel" role="dialog" aria-modal="true" aria-label="Réglages de la télévision">
@@ -135,7 +123,7 @@
       </label>
       <button type="submit" class="btn-primary">Ajouter la chaîne</button>
     </form>
-    <p class="settings-hint">Astuce : un simple lien de vidéo fonctionne aussi (une playlist "mix" sera générée automatiquement).</p>
+    <p class="settings-hint">Astuce : un simple lien de vidéo fonctionne aussi (une playlist "mix" sera générée automatiquement). Clique sur une chaîne ci-dessous pour la regarder.</p>
     <ul id="settings-list" class="settings-list"></ul>
   </div>
 </div>
@@ -146,11 +134,6 @@
     <button id="ambient-mute" class="remote-btn remote-btn--ambient" data-blip aria-pressed="false">🔊 Ambiance</button>
   </div>
   <div class="remote-row">
-    <span class="remote-label">CHAINE</span>
-    <button id="btn-ch-down" class="remote-btn" data-blip aria-label="Chaîne précédente">▼</button>
-    <button id="btn-ch-up" class="remote-btn" data-blip aria-label="Chaîne suivante">▲</button>
-  </div>
-  <div class="remote-row">
     <span class="remote-label">VOLUME</span>
     <button id="btn-vol-down" class="remote-btn" data-blip aria-label="Baisser le volume">−</button>
     <div class="volume-meter"><div id="volume-bar" class="volume-meter__bar"></div></div>
@@ -159,7 +142,7 @@
   <div id="volume-label" class="volume-label">VOL 60</div>
   <div class="remote-row">
     <button id="btn-mute" class="remote-btn" data-blip aria-label="Couper le son" aria-pressed="false">🔇 Muet</button>
-    <button id="btn-guide" class="remote-btn" data-blip aria-label="Ouvrir le guide des programmes">☰ Guide</button>
+    <button id="btn-fullscreen" class="remote-btn" data-blip aria-label="Plein écran cinéma">⛶ Écran</button>
   </div>
 </section>
 

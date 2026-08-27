@@ -1,26 +1,32 @@
 /* ============================================================================
-   LE SALON — styles de base, décor, mise en page, jour/nuit, responsive
+   MY CHILDHOOD TV — styles de base, décor "cartoon", mise en page,
+   jour/nuit, responsive. Décor fixe (pas de parallax) : seules les
+   animations dédiées (lampe à lave, horloge, chat) bougent.
    ============================================================================ */
 
 :root {
-  --wall-day: #d8b98a;
-  --wall-day-2: #c9a670;
-  --wall-shadow: rgba(60, 30, 10, 0.08);
+  --wall-day: #e8b96f;
+  --wall-day-2: #dba54f;
+  --wall-dot: rgba(60, 30, 10, 0.12);
   --wood-dark: #4a2f1c;
-  --wood-mid: #6b4226;
-  --wood-light: #8a5a34;
-  --sofa-color: #7a3b3b;
-  --sofa-shadow: #5c2b2b;
-  --rug-color: #b5502e;
-  --olive: #6b6b2e;
-  --burgundy: #6e1f2a;
-  --burnt-orange: #c1601f;
-  --cream: #f1e4c6;
+  --wood-mid: #7a4a26;
+  --wood-light: #a1703f;
+  --sofa-color: #e2453f;
+  --sofa-shadow: #b32e2e;
+  --sofa-highlight: #f06a5a;
+  --rug-color: #3fa9a0;
+  --rug-shadow: #2c7f79;
+  --olive: #4a9c3f;
+  --olive-dark: #327a2c;
+  --burgundy: #c23b4a;
+  --burnt-orange: #ff8a2b;
+  --cream: #fff6e0;
   --ink: #2a1c12;
   --accent: #ffce4a;
-  --sky-day: linear-gradient(#8fd3ff, #d9f2ff);
+  --sky-day: linear-gradient(#7ecbff, #cdeeff);
   --sky-night: linear-gradient(#0a1030, #1c2350);
   --lamp-glow: rgba(255, 206, 74, 0.35);
+  --outline: 3px solid var(--ink);
   --font-display: "Press Start 2P", "VT323", monospace;
   --font-body: "VT323", "Courier New", monospace;
 }
@@ -63,7 +69,7 @@ button {
 }
 
 /* ---------------------------------------------------------------------- */
-/* ROOM                                                                    */
+/* ROOM — décor fixe                                                       */
 /* ---------------------------------------------------------------------- */
 
 .room {
@@ -73,7 +79,6 @@ button {
   overflow: hidden;
   background: var(--wall-day);
   transition: background 0.8s ease;
-  perspective: 800px;
 }
 
 .room--night {
@@ -84,14 +89,14 @@ button {
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 10px 10px, var(--wall-shadow) 2px, transparent 3px),
+    radial-gradient(circle at 12px 12px, var(--wall-dot) 6px, transparent 7px),
     linear-gradient(var(--wall-day), var(--wall-day-2));
-  background-size: 40px 40px, 100% 100%;
+  background-size: 56px 56px, 100% 100%;
   z-index: 1;
 }
 .room--night .wallpaper {
   background-image:
-    radial-gradient(circle at 10px 10px, rgba(0, 0, 0, 0.25) 2px, transparent 3px),
+    radial-gradient(circle at 12px 12px, rgba(0, 0, 0, 0.3) 6px, transparent 7px),
     linear-gradient(#2b2440, #1a1628);
 }
 
@@ -105,8 +110,8 @@ button {
   height: 30%;
   z-index: 2;
   border: 10px solid var(--wood-dark);
-  border-radius: 4px;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  box-shadow: 0 6px 0 var(--ink);
 }
 .window__sky {
   position: absolute;
@@ -139,7 +144,7 @@ button {
 .window__frame {
   position: absolute;
   inset: 0;
-  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.2);
   pointer-events: none;
 }
 .curtain {
@@ -147,9 +152,9 @@ button {
   top: -6%;
   width: 30%;
   height: 112%;
-  background: repeating-linear-gradient(90deg, var(--burgundy), var(--burgundy) 10px, #7f2634 10px, #7f2634 20px);
+  background: repeating-linear-gradient(90deg, var(--burgundy), var(--burgundy) 10px, #e05a6a 10px, #e05a6a 20px);
+  border: var(--outline);
   border-radius: 0 0 40% 40%;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 .curtain--left {
   left: -14%;
@@ -167,13 +172,14 @@ button {
   z-index: 20;
   width: 2.4em;
   height: 2.4em;
-  border-radius: 6px;
-  border: 2px solid var(--wood-dark);
+  border-radius: 8px;
+  border: var(--outline);
   background: var(--cream);
   font-size: 1.1rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 3px 3px 0 var(--ink);
 }
 .light-switch:hover {
   filter: brightness(1.1);
@@ -185,9 +191,10 @@ button {
   top: 12%;
   width: 16%;
   min-width: 150px;
-  height: 10px;
+  height: 12px;
   background: var(--wood-mid);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  border: var(--outline);
+  border-radius: 3px;
   z-index: 3;
 }
 .shelf--left {
@@ -204,8 +211,8 @@ button {
   width: 22%;
   aspect-ratio: 4 / 5;
   background: var(--wood-dark);
-  border: 3px solid #c8a878;
-  border-radius: 2px;
+  border: var(--outline);
+  border-radius: 4px;
 }
 .frame--1 {
   left: 4%;
@@ -218,8 +225,9 @@ button {
 }
 .frame__photo {
   position: absolute;
-  inset: 8%;
-  background: linear-gradient(135deg, #cbb994, #a48a5f);
+  inset: 10%;
+  background: linear-gradient(135deg, #e8d3a0, #c9a860);
+  border: 2px solid var(--ink);
 }
 
 .vhs-stack {
@@ -228,22 +236,23 @@ button {
   right: 6%;
   display: flex;
   flex-direction: column-reverse;
-  gap: 2px;
+  gap: 3px;
 }
 .vhs {
   width: 60px;
-  height: 12px;
+  height: 13px;
   background: var(--ink);
-  border-left: 4px solid var(--accent);
+  border: 2px solid var(--ink);
+  border-left: 6px solid var(--accent);
 }
 .vhs--2 {
-  border-left-color: #e06b6b;
+  border-left-color: #ff6b6b;
 }
 .vhs--3 {
-  border-left-color: #6bb0e0;
+  border-left-color: #6bc7ff;
 }
 
-/* Lava lamp */
+/* Lava lamp (praised as-is : uniquement l'animation au clic est conservée) */
 .lava-lamp {
   position: absolute;
   bottom: 100%;
@@ -258,9 +267,9 @@ button {
   left: 6px;
   right: 6px;
   top: 6px;
-  background: rgba(255, 200, 90, 0.25);
+  background: rgba(255, 200, 90, 0.3);
   border-radius: 50% 50% 40% 40% / 60% 60% 30% 30%;
-  border: 2px solid #caa96a;
+  border: var(--outline);
   overflow: hidden;
 }
 .lava-lamp__blob {
@@ -269,8 +278,8 @@ button {
   height: 22%;
   left: 20%;
   border-radius: 50%;
-  background: #d9432e;
-  opacity: 0.85;
+  background: #ff4b30;
+  opacity: 0.9;
   transition: transform 3s ease-in-out;
 }
 .lava-lamp__blob.b1 {
@@ -313,6 +322,9 @@ button {
   right: 16px;
   height: 8px;
   background: var(--wood-dark);
+  border: 2px solid var(--ink);
+  border-top: none;
+  border-bottom: none;
 }
 .lava-lamp__base {
   position: absolute;
@@ -320,7 +332,8 @@ button {
   left: 4px;
   right: 4px;
   height: 14px;
-  background: #b08a3f;
+  background: #e0a83f;
+  border: var(--outline);
   border-radius: 4px;
 }
 
@@ -340,16 +353,18 @@ button {
   width: 60%;
   height: 40px;
   background: var(--burnt-orange);
-  border-radius: 4px 4px 10px 10px;
+  border: var(--outline);
+  border-radius: 4px 4px 12px 12px;
 }
 .plant__leaf {
   position: absolute;
   bottom: 30px;
   left: 50%;
-  width: 16px;
-  height: 90px;
+  width: 18px;
+  height: 92px;
   background: var(--olive);
-  border-radius: 50% 50% 0 0;
+  border: 3px solid var(--ink);
+  border-radius: 60% 60% 0 0;
   transform-origin: bottom center;
 }
 .plant__leaf.l1 {
@@ -371,10 +386,12 @@ button {
 
 .tv-unit {
   position: absolute;
-  top: 10%;
+  top: 9%;
   left: 50%;
   transform: translateX(-50%);
-  width: min(46vw, 680px);
+  /* borné en largeur ET en hauteur (vh) pour garder une taille cohérente
+     quel que soit le format d'écran, et laisser de la place au canapé */
+  width: min(46vw, 60vh, 680px);
   z-index: 5;
 }
 
@@ -385,9 +402,10 @@ button {
 .tv-set__frame {
   position: relative;
   background: linear-gradient(160deg, #3a3a3a, #17171a);
+  border: 4px solid var(--ink);
   border-radius: 22px;
   padding: 3.5% 3.5% 6%;
-  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.45), inset 0 0 0 4px #050505;
+  box-shadow: 0 10px 0 var(--ink);
 }
 
 .tv-set__brand {
@@ -396,7 +414,7 @@ button {
   right: 8%;
   font-family: var(--font-display);
   font-size: 0.5rem;
-  color: #8a8a8a;
+  color: #cfcfcf;
   letter-spacing: 1px;
 }
 
@@ -407,7 +425,7 @@ button {
   background: #000;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
 }
 
 .tv-player {
@@ -431,7 +449,7 @@ button {
   border-radius: 50%;
   background: #444;
   color: #ddd;
-  border: 2px solid #222;
+  border: 2px solid var(--ink);
   font-size: 0.9rem;
 }
 
@@ -439,13 +457,15 @@ button {
   height: 22px;
   margin: 0 12%;
   background: var(--wood-dark);
+  border: 3px solid var(--ink);
+  border-top: none;
   border-radius: 0 0 4px 4px;
 }
 
 /* Media console / VCR */
 .media-console {
   position: absolute;
-  top: 68%;
+  top: 64%;
   left: 50%;
   transform: translateX(-50%);
   width: min(34vw, 500px);
@@ -455,9 +475,9 @@ button {
   position: relative;
   height: 46px;
   background: var(--wood-mid);
-  border-radius: 4px;
-  border: 2px solid var(--wood-dark);
-  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+  border: var(--outline);
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 var(--ink);
 }
 .vcr__slot {
   position: absolute;
@@ -480,20 +500,25 @@ button {
   font-size: 0.7rem;
   padding: 4px 6px;
   border-radius: 2px;
-  animation: clock-blink 1s steps(1) infinite;
+  border: 2px solid var(--ink);
 }
-.vcr__clock.clock--fast {
-  animation: clock-blink 0.12s steps(1) infinite;
-}
-@keyframes clock-blink {
+@keyframes clock-glitch {
   0%,
-  49% {
-    opacity: 1;
-  }
-  50%,
   100% {
-    opacity: 0.35;
+    color: #ff3b3b;
   }
+  25% {
+    color: #3bff6b;
+  }
+  50% {
+    color: #3b8bff;
+  }
+  75% {
+    color: #fff;
+  }
+}
+.vcr__clock.clock--glitch {
+  animation: clock-glitch 0.15s steps(1) infinite;
 }
 
 /* Rug */
@@ -504,13 +529,14 @@ button {
   transform: translateX(-50%);
   width: min(92vw, 1320px);
   height: 26%;
-  background: radial-gradient(ellipse at center, var(--rug-color), #8a3a1f 75%, #6e2c17 100%);
-  border-radius: 18px;
+  background: var(--rug-color);
+  border: 6px solid var(--ink);
+  border-radius: 22px;
   z-index: 2;
-  box-shadow: 0 0 0 8px #7a3018 inset;
+  box-shadow: inset 0 0 0 6px var(--rug-shadow);
 }
 
-/* Sofa (premier plan, légèrement flou) */
+/* Sofa (premier plan) */
 .sofa {
   position: absolute;
   bottom: -4%;
@@ -519,31 +545,24 @@ button {
   width: min(78vw, 1100px);
   height: 30%;
   z-index: 10;
-  filter: blur(0.6px);
 }
 .sofa::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, var(--sofa-color), var(--sofa-shadow));
+  background: var(--sofa-color);
+  border: var(--outline);
   border-radius: 26px 26px 6px 6px;
-  box-shadow: 0 -6px 0 6px var(--sofa-shadow) inset, 0 20px 30px rgba(0, 0, 0, 0.4);
-}
-.sofa::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.35) 90%);
-  border-radius: 26px 26px 6px 6px;
+  box-shadow: inset 0 -14px 0 var(--sofa-shadow);
 }
 .sofa__cushion {
   position: absolute;
   top: -14%;
   width: 22%;
   height: 40%;
-  background: var(--sofa-color);
-  border: 3px solid var(--sofa-shadow);
-  border-radius: 12px;
+  background: var(--sofa-highlight);
+  border: var(--outline);
+  border-radius: 14px;
 }
 .sofa__cushion.c1 {
   left: 10%;
@@ -554,23 +573,31 @@ button {
 .sofa__cushion.c3 {
   left: 68%;
 }
-.sofa-cat {
+
+/* Chat qui se balade dans le salon */
+.room-cat {
   position: absolute;
-  top: -2%;
-  right: 14%;
+  z-index: 11;
   font-size: 2rem;
-  transform: rotate(-12deg) scaleX(-1) scaleY(0.85);
-  transition: transform 0.3s ease;
+  line-height: 1;
+  transform: scaleX(-1);
+  transition: top 2.5s ease-in-out, left 2.5s ease-in-out, transform 0.3s ease;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.25));
 }
-.sofa-cat.cat--awake {
-  transform: rotate(0deg) scaleX(-1) scale(1.15);
+.room-cat.cat--walking {
+  transform: scaleX(-1) scale(1.05);
+}
+.room-cat.cat--lying {
+  transform: scaleX(-1) rotate(-10deg) scaleY(0.82);
+}
+.room-cat.cat--awake {
+  transform: scaleX(-1) scale(1.2);
 }
 
 /* ---------------------------------------------------------------------- */
-/* EPG + SETTINGS (modales)                                                */
+/* SETTINGS (modale)                                                       */
 /* ---------------------------------------------------------------------- */
 
-.epg-overlay,
 .settings-modal {
   position: fixed;
   inset: 0;
@@ -581,12 +608,10 @@ button {
   justify-content: center;
 }
 
-.epg-overlay[hidden],
 .settings-modal[hidden] {
   display: none;
 }
 
-.epg-panel,
 .settings-panel {
   width: min(90vw, 460px);
   max-height: 80vh;
@@ -621,40 +646,6 @@ button {
   width: 2em;
   height: 2em;
   font-size: 1rem;
-}
-
-.epg-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4em;
-}
-.epg-item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 0.8em;
-  background: #fff8e8;
-  border: 2px solid var(--wood-mid);
-  border-radius: 6px;
-  padding: 0.5em 0.8em;
-  font-size: 1.2rem;
-  text-align: left;
-}
-.epg-item:hover,
-.epg-item:focus-visible {
-  background: var(--accent);
-}
-.epg-item--current {
-  border-color: var(--burnt-orange);
-  box-shadow: 0 0 0 2px var(--burnt-orange) inset;
-}
-.epg-item__num {
-  font-family: var(--font-display);
-  font-size: 0.9rem;
-  color: var(--burgundy);
 }
 
 .settings-form {
@@ -700,23 +691,32 @@ button {
 .settings-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.5em;
+}
+.settings-item__select {
+  flex: 1;
+  text-align: left;
   background: #fff8e8;
   border: 2px solid var(--wood-mid);
   border-radius: 6px;
-  padding: 0.4em 0.6em;
-  font-size: 1.1rem;
+  padding: 0.5em 0.8em;
+  font-size: 1.2rem;
+}
+.settings-item__select:hover,
+.settings-item__select:focus-visible {
+  background: var(--accent);
+}
+.settings-item__select--current {
+  border-color: var(--burnt-orange);
+  box-shadow: 0 0 0 2px var(--burnt-orange) inset;
 }
 .settings-item__delete {
   background: var(--burgundy);
   color: var(--cream);
   border: none;
   border-radius: 4px;
-  padding: 0.2em 0.6em;
-}
-.settings-empty {
-  opacity: 0.7;
-  font-style: italic;
+  padding: 0.4em 0.6em;
+  font-size: 1rem;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -730,6 +730,7 @@ button {
   z-index: 200;
   width: 210px;
   background: linear-gradient(160deg, #2c2a28, #171615);
+  border: 3px solid var(--ink);
   border-radius: 16px;
   padding: 0.9em;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
@@ -817,7 +818,8 @@ button {
   .plant,
   .media-console,
   .rug,
-  .sofa {
+  .sofa,
+  .room-cat {
     display: none;
   }
 

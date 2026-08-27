@@ -1,27 +1,7 @@
 /**
- * Interactions du décor : parallax souris, easter eggs cliquables,
- * cycle jour/nuit, et bips au survol des éléments interactifs.
+ * Interactions du décor (fixe, pas de parallax) : easter eggs cliquables,
+ * horloge à l'heure réelle, chat qui se balade, cycle jour/nuit.
  */
-
-function initParallax(root) {
-  const layers = root.querySelectorAll("[data-depth]");
-  if (!layers.length) return;
-  let raf = null;
-  root.addEventListener("mousemove", (e) => {
-    if (root.classList.contains("cinema-mode")) return;
-    const { innerWidth, innerHeight } = window;
-    const x = (e.clientX / innerWidth - 0.5) * 2;
-    const y = (e.clientY / innerHeight - 0.5) * 2;
-    if (raf) cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(() => {
-      if (root.classList.contains("cinema-mode")) return;
-      layers.forEach((layer) => {
-        const depth = parseFloat(layer.dataset.depth) || 0;
-        layer.style.transform = `translate3d(${x * depth}px, ${y * depth * 0.6}px, 0)`;
-      });
-    });
-  });
-}
 
 function initHoverSounds(root) {
   root.querySelectorAll("[data-blip]").forEach((el) => {
@@ -38,26 +18,87 @@ function initLavaLamp() {
   });
 }
 
+/** Horloge du magnétoscope : affiche l'heure réelle, glitch amusant au clic. */
 function initClock() {
   const clock = document.getElementById("wall-clock");
-  if (!clock) return;
+  const text = clock && clock.querySelector(".vcr__clock-text");
+  if (!clock || !text) return;
+
+  function render() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const separator = now.getSeconds() % 2 === 0 ? ":" : " ";
+    text.textContent = `${hh}${separator}${mm}`;
+  }
+
+  render();
+  setInterval(render, 1000);
+
   clock.addEventListener("click", () => {
-    clock.classList.add("clock--fast");
+    clock.classList.add("clock--glitch");
     Audio2000.ping(880);
-    setTimeout(() => clock.classList.remove("clock--fast"), 4000);
+    setTimeout(() => clock.classList.remove("clock--glitch"), 1200);
   });
 }
 
-function initSleepingCat() {
-  const cat = document.getElementById("sofa-cat");
+/** Le chat se balade dans le salon et s'allonge à différents endroits. */
+function initWanderingCat() {
+  const cat = document.getElementById("room-cat");
   if (!cat) return;
+
+  const spots = [
+    { top: "84%", left: "38%" }, // sur le tapis
+    { top: "84%", left: "60%" }, // sur le tapis, côté opposé
+    { top: "70%", left: "22%" }, // au pied du canapé
+    { top: "58%", left: "10%" }, // près de la plante
+    { top: "88%", left: "50%" }, // devant la télé
+    { top: "68%", left: "78%" }, // près du meuble TV
+  ];
+  let currentSpot = -1;
+  let awake = false;
+
+  function moveTo(index) {
+    currentSpot = index;
+    const spot = spots[index];
+    cat.classList.add("cat--walking");
+    cat.classList.remove("cat--lying");
+    cat.style.top = spot.top;
+    cat.style.left = spot.left;
+    clearTimeout(cat._arriveTimer);
+    cat._arriveTimer = setTimeout(() => {
+      cat.classList.remove("cat--walking");
+      cat.classList.add("cat--lying");
+    }, 2600);
+  }
+
+  function scheduleNextMove() {
+    clearTimeout(cat._wanderTimer);
+    cat._wanderTimer = setTimeout(() => {
+      if (!awake) {
+        let next = Math.floor(Math.random() * spots.length);
+        if (next === currentSpot) next = (next + 1) % spots.length;
+        moveTo(next);
+      }
+      scheduleNextMove();
+    }, 9000 + Math.random() * 8000);
+  }
+
+  moveTo(Math.floor(Math.random() * spots.length));
+  scheduleNextMove();
+
   cat.addEventListener("click", () => {
-    const awake = cat.classList.toggle("cat--awake");
     Audio2000.meow();
-    if (awake) {
-      clearTimeout(cat._sleepTimer);
-      cat._sleepTimer = setTimeout(() => cat.classList.remove("cat--awake"), 6000);
-    }
+    awake = true;
+    cat.classList.add("cat--awake");
+    clearTimeout(cat._awakeTimer);
+    cat._awakeTimer = setTimeout(() => {
+      awake = false;
+      cat.classList.remove("cat--awake");
+      let next = Math.floor(Math.random() * spots.length);
+      if (next === currentSpot) next = (next + 1) % spots.length;
+      moveTo(next);
+    }, 2500);
   });
 }
 
@@ -83,11 +124,9 @@ function initDayNight() {
 }
 
 window.initDecor = function initDecor() {
-  const room = document.getElementById("room");
-  if (room) initParallax(room);
   initHoverSounds(document);
   initLavaLamp();
   initClock();
-  initSleepingCat();
+  initWanderingCat();
   initDayNight();
 };

@@ -1,6 +1,7 @@
 /**
- * Télécommande + logique de zapping + guide des programmes (EPG) +
- * formulaire de chaînes personnalisées.
+ * Télécommande : power, volume, plein écran, et choix de la chaîne
+ * (la chaîne par défaut ou une playlist YouTube personnalisée) via le
+ * panneau Réglages.
  */
 
 /** Essaie d'extraire un ID de playlist YouTube utilisable depuis une URL ou un ID collé. */
@@ -32,23 +33,23 @@ class RemoteControl {
     this.muted = Storage.getMuted();
     this.power = Storage.getPower();
     this.currentIndex = this._resolveInitialIndex();
-    this.switching = false;
 
     this.player = new TVPlayer({
       elementId: "player",
       initialVolume: this.volume,
-      onReady: () => this._applyVolumeState(),
+      onReady: () => {
+        this._applyVolumeState();
+        if (this.power) this.player.playChannel(this.currentChannel());
+      },
     });
 
     this._bindButtons();
-    this._bindGuide();
     this._bindSettings();
     this._renderVolume();
     this._updatePowerUI(false);
 
     if (this.power) {
-      this.player.playChannel(this.currentChannel());
-      this._showBanner(this.currentChannel(), false);
+      this._showBanner(this.currentChannel());
     }
   }
 
@@ -65,22 +66,17 @@ class RemoteControl {
   _bindButtons() {
     const d = this.dom;
     d.power.addEventListener("click", () => this.togglePower());
-    d.chUp.addEventListener("click", () => this.changeChannel(1));
-    d.chDown.addEventListener("click", () => this.changeChannel(-1));
     d.volUp.addEventListener("click", () => this.changeVolume(10));
     d.volDown.addEventListener("click", () => this.changeVolume(-10));
     d.mute.addEventListener("click", () => this.toggleMute());
-    d.guide.addEventListener("click", () => this.toggleGuide());
+    d.fullscreen.addEventListener("click", () => {
+      Audio2000.remoteClick();
+      if (typeof this.onFullscreenRequest === "function") this.onFullscreenRequest();
+    });
 
     window.addEventListener("keydown", (e) => {
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
       switch (e.key) {
-        case "ArrowUp":
-          this.changeChannel(1);
-          break;
-        case "ArrowDown":
-          this.changeChannel(-1);
-          break;
         case "ArrowRight":
           this.changeVolume(10);
           break;
@@ -90,10 +86,6 @@ class RemoteControl {
         case "m":
         case "M":
           this.toggleMute();
-          break;
-        case "g":
-        case "G":
-          this.toggleGuide();
           break;
       }
     });
@@ -106,10 +98,9 @@ class RemoteControl {
     this._updatePowerUI(true);
     if (this.power) {
       this.player.playChannel(this.currentChannel());
-      this._showBanner(this.currentChannel(), false);
+      this._showBanner(this.currentChannel());
     } else {
       this.player.pause();
-      this.dom.epgOverlay.hidden = true;
     }
   }
 
@@ -132,54 +123,30 @@ class RemoteControl {
     }
   }
 
-  changeChannel(direction) {
-    if (!this.power || this.switching || this.channels.length < 2) return;
-    this.currentIndex = (this.currentIndex + direction + this.channels.length) % this.channels.length;
-    const channel = this.currentChannel();
-    Storage.setLastChannel(channel.number);
-    Audio2000.remoteClick();
-    this._playStaticThen(() => {
-      this.player.playChannel(channel);
-      this._showBanner(channel, true);
-    });
-  }
-
-  jumpToChannel(index) {
-    if (!this.power || this.switching) return;
+  selectChannel(index) {
+    if (index === this.currentIndex) return;
     this.currentIndex = index;
     const channel = this.currentChannel();
     Storage.setLastChannel(channel.number);
     Audio2000.remoteClick();
-    this.dom.epgOverlay.hidden = true;
-    this._playStaticThen(() => {
-      this.player.playChannel(channel);
-      this._showBanner(channel, true);
-    });
-  }
-
-  _playStaticThen(callback) {
-    this.switching = true;
     const staticEl = this.dom.staticOverlay;
     staticEl.hidden = false;
     Audio2000.staticBurst(0.4);
     setTimeout(() => {
       staticEl.hidden = true;
-      this.switching = false;
-      callback();
+      if (this.power) this.player.playChannel(channel);
+      this._showBanner(channel);
     }, 400);
   }
 
-  _showBanner(channel, autoHide) {
-    const { bannerNumber, bannerName, banner } = this.dom;
-    bannerNumber.textContent = String(channel.number).padStart(2, "0");
+  _showBanner(channel) {
+    const { bannerName, banner } = this.dom;
     bannerName.textContent = channel.name;
     banner.classList.add("channel-banner--visible");
     clearTimeout(this._bannerTimer);
-    if (autoHide !== false) {
-      this._bannerTimer = setTimeout(() => {
-        banner.classList.remove("channel-banner--visible");
-      }, 2500);
-    }
+    this._bannerTimer = setTimeout(() => {
+      banner.classList.remove("channel-banner--visible");
+    }, 2500);
   }
 
   changeVolume(delta) {
@@ -211,46 +178,12 @@ class RemoteControl {
     this.dom.volumeLabel.textContent = this.muted ? "MUET" : `VOL ${this.volume}`;
   }
 
-  _bindGuide() {
-    this._renderGuide();
-    this.dom.epgClose.addEventListener("click", () => (this.dom.epgOverlay.hidden = true));
-  }
-
-  toggleGuide() {
-    if (!this.power) return;
-    Audio2000.remoteClick();
-    this.dom.epgOverlay.hidden = !this.dom.epgOverlay.hidden;
-    if (!this.dom.epgOverlay.hidden) {
-      this._renderGuide();
-      const firstBtn = this.dom.epgList.querySelector("button");
-      if (firstBtn) firstBtn.focus();
-    }
-  }
-
-  _renderGuide() {
-    const list = this.dom.epgList;
-    list.innerHTML = "";
-    this.channels.forEach((channel, index) => {
-      const li = document.createElement("li");
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "epg-item";
-      btn.dataset.blip = "true";
-      btn.innerHTML = `<span class="epg-item__num">${String(channel.number).padStart(2, "0")}</span><span class="epg-item__name">${channel.name}</span>`;
-      if (index === this.currentIndex) btn.classList.add("epg-item--current");
-      btn.addEventListener("click", () => this.jumpToChannel(index));
-      btn.addEventListener("mouseenter", () => Audio2000.hoverBlip());
-      li.appendChild(btn);
-      list.appendChild(li);
-    });
-  }
-
   _bindSettings() {
     const d = this.dom;
     d.settingsToggle.addEventListener("click", () => {
       Audio2000.hoverBlip();
       d.settingsModal.hidden = !d.settingsModal.hidden;
-      if (!d.settingsModal.hidden) this._renderCustomList();
+      if (!d.settingsModal.hidden) this._renderChannelList();
     });
     d.settingsClose.addEventListener("click", () => (d.settingsModal.hidden = true));
 
@@ -260,42 +193,52 @@ class RemoteControl {
       const urlValue = d.settingsUrl.value.trim();
       if (!name || !urlValue) return;
       const playlistId = parsePlaylistInput(urlValue);
-      const channel = { name, playlistId };
-      Storage.addCustomChannel(channel);
+      Storage.addCustomChannel({ name, playlistId });
       this.channels = Storage.getAllChannels();
       d.settingsForm.reset();
-      this._renderCustomList();
-      this._renderGuide();
+      this._renderChannelList();
     });
   }
 
-  _renderCustomList() {
-    const list = Storage.getCustomChannels();
-    const container = this.dom.settingsList;
-    container.innerHTML = "";
-    if (!list.length) {
-      container.innerHTML = '<li class="settings-empty">Aucune chaîne personnalisée pour le moment.</li>';
-      return;
-    }
-    list.forEach((channel) => {
+  _renderChannelList() {
+    const list = this.dom.settingsList;
+    list.innerHTML = "";
+    this.channels.forEach((channel, index) => {
       const li = document.createElement("li");
       li.className = "settings-item";
-      const label = document.createElement("span");
-      label.textContent = channel.name;
-      const del = document.createElement("button");
-      del.type = "button";
-      del.className = "settings-item__delete";
-      del.textContent = "Supprimer";
-      del.addEventListener("click", () => {
-        Storage.removeCustomChannel(channel.number);
-        this.channels = Storage.getAllChannels();
-        if (this.currentIndex >= this.channels.length) this.currentIndex = 0;
-        this._renderCustomList();
-        this._renderGuide();
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "settings-item__select";
+      btn.dataset.blip = "true";
+      btn.textContent = channel.name;
+      if (index === this.currentIndex) btn.classList.add("settings-item__select--current");
+      btn.addEventListener("click", () => {
+        this.selectChannel(index);
+        this._renderChannelList();
       });
-      li.appendChild(label);
-      li.appendChild(del);
-      container.appendChild(li);
+      btn.addEventListener("mouseenter", () => Audio2000.hoverBlip());
+      li.appendChild(btn);
+
+      if (channel.isCustom) {
+        const del = document.createElement("button");
+        del.type = "button";
+        del.className = "settings-item__delete";
+        del.textContent = "Supprimer";
+        del.addEventListener("click", () => {
+          Storage.removeCustomChannel(channel.number);
+          this.channels = Storage.getAllChannels();
+          if (this.currentIndex >= this.channels.length) {
+            this.currentIndex = 0;
+            Storage.setLastChannel(this.currentChannel().number);
+            if (this.power) this.player.playChannel(this.currentChannel());
+          }
+          this._renderChannelList();
+        });
+        li.appendChild(del);
+      }
+
+      list.appendChild(li);
     });
   }
 }

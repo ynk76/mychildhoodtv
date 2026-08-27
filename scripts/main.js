@@ -43,46 +43,44 @@ function initAmbientMuteButton() {
   });
 }
 
+/** Mode cinéma plein écran : double-clic sur l'écran, ou bouton dédié sur la télécommande. */
 function initCinemaMode() {
   const screen = document.getElementById("tv-screen");
   const room = document.getElementById("room");
-  if (!screen || !room) return;
+  if (!screen || !room) return null;
+
   function toggle() {
-    const enteringCinema = room.classList.toggle("cinema-mode");
-    if (enteringCinema) screen.closest("[data-depth]").style.transform = "";
+    room.classList.toggle("cinema-mode");
   }
+
   screen.addEventListener("dblclick", toggle);
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && room.classList.contains("cinema-mode")) {
       room.classList.remove("cinema-mode");
     }
   });
+
+  return toggle;
 }
 
 function initApp() {
   window.initDecor();
   initAmbientMuteButton();
-  initCinemaMode();
+  const toggleCinema = initCinemaMode();
 
   const remote = new RemoteControl({
     power: document.getElementById("btn-power"),
-    chUp: document.getElementById("btn-ch-up"),
-    chDown: document.getElementById("btn-ch-down"),
     volUp: document.getElementById("btn-vol-up"),
     volDown: document.getElementById("btn-vol-down"),
     mute: document.getElementById("btn-mute"),
-    guide: document.getElementById("btn-guide"),
+    fullscreen: document.getElementById("btn-fullscreen"),
     volumeBar: document.getElementById("volume-bar"),
     volumeLabel: document.getElementById("volume-label"),
     screen: document.getElementById("tv-screen"),
     powerOff: document.getElementById("power-off-overlay"),
     staticOverlay: document.getElementById("static-overlay"),
     banner: document.getElementById("channel-banner"),
-    bannerNumber: document.getElementById("channel-banner-number"),
     bannerName: document.getElementById("channel-banner-name"),
-    epgOverlay: document.getElementById("epg-overlay"),
-    epgList: document.getElementById("epg-list"),
-    epgClose: document.getElementById("epg-close"),
     settingsToggle: document.getElementById("settings-toggle"),
     settingsModal: document.getElementById("settings-modal"),
     settingsClose: document.getElementById("settings-close"),
@@ -91,6 +89,8 @@ function initApp() {
     settingsUrl: document.getElementById("settings-url"),
     settingsList: document.getElementById("settings-list"),
   });
+
+  remote.onFullscreenRequest = toggleCinema;
 
   window.initScreensaver({
     overlayEl: document.getElementById("screensaver-overlay"),

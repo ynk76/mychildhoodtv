@@ -1,43 +1,22 @@
 /**
  * ============================================================================
- *  CONFIGURATION DES CHAINES — "Le Salon"
+ *  CONFIGURATION DE LA CHAINE — "My Childhood TV"
  * ============================================================================
- *  Pour ajouter une chaîne : ajoute un objet { number, name, playlistId }
- *  ci-dessous. `playlistId` accepte :
+ *  Une seule chaîne par défaut : un mix de dessins animés/génériques
+ *  années 2000. `playlistId` accepte :
  *    - un ID de playlist YouTube classique (commence par "PL...")
  *    - un ID de "mix" YouTube (commence par "RD" + un ID de vidéo)
- *  Les chaînes ajoutées ici sont "en dur". Les utilisateurs peuvent aussi
- *  ajouter leurs propres chaînes via le panneau Réglages : elles sont
- *  stockées en localStorage et fusionnées avec cette liste au chargement
- *  (voir scripts/storage.js -> getAllChannels()).
+ *  Les visiteurs peuvent remplacer/compléter cette chaîne par leur propre
+ *  playlist YouTube via le panneau Réglages (stocké en localStorage, voir
+ *  scripts/storage.js -> getAllChannels()).
  * ============================================================================
  */
 
 const DEFAULT_CHANNELS = [
   {
     number: 1,
-    name: "MTV Hits 2000",
-    playlistId: "PLmyAPRLQRJ6lMbAdXYGuyZ627Y9RoX25i",
-  },
-  {
-    number: 2,
-    name: "Dessins Animés",
-    playlistId: "PLJYf0JdTApCqAbZImkQagXEuByh-b_7To",
-  },
-  {
-    number: 3,
-    name: "Ciné Club",
-    playlistId: "RDvTi_xaPRRhw",
-  },
-  {
-    number: 4,
-    name: "Jeux Vidéo Rétro",
-    playlistId: "PLA5F8A028CC9F12FD",
-  },
-  {
-    number: 5,
-    name: "Zap Pub",
-    playlistId: "PLmWoJpHG9qzwIP8-A5nVXIRt-OVC0O1qV",
+    name: "Génériques Dessins Animés 2000",
+    playlistId: "PL6hfXTHSuahysoYq9bztq8UVSgXBtU_Jt",
   },
 ];
 

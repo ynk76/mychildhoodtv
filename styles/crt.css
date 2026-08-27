@@ -1,5 +1,6 @@
 /* ============================================================================
-   EFFETS CRT, BOOT, STATIQUE, VEILLE, MODE CINEMA
+   BOOT, STATIQUE, VEILLE, MODE CINEMA
+   (les effets CRT — scanlines/vignette/flicker — ont été retirés)
    ============================================================================ */
 
 /* ---------------------------------------------------------------------- */
@@ -71,56 +72,9 @@
 }
 
 /* ---------------------------------------------------------------------- */
-/* CRT screen effects                                                      */
+/* Statique / neige au changement de chaîne                                */
 /* ---------------------------------------------------------------------- */
 
-.crt-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0.18) 0px,
-    rgba(0, 0, 0, 0.18) 1px,
-    transparent 2px,
-    transparent 3px
-  );
-  mix-blend-mode: multiply;
-  animation: crt-flicker 6s infinite;
-}
-@keyframes crt-flicker {
-  0%,
-  96%,
-  100% {
-    opacity: 1;
-  }
-  97% {
-    opacity: 0.82;
-  }
-  98% {
-    opacity: 1;
-  }
-  99% {
-    opacity: 0.9;
-  }
-}
-
-.crt-vignette {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  pointer-events: none;
-  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
-  box-shadow: inset 0 0 40px 10px rgba(0, 0, 0, 0.6);
-}
-
-.tv-screen--off .crt-overlay,
-.tv-screen--off .crt-vignette {
-  opacity: 0;
-}
-
-/* Statique / neige au changement de chaîne */
 .static-overlay {
   position: absolute;
   inset: 0;
@@ -141,15 +95,12 @@
   }
 }
 
-/* Bandeau nom / numéro de chaîne */
+/* Bandeau nom de chaîne */
 .channel-banner {
   position: absolute;
   top: 6%;
   left: 6%;
   z-index: 15;
-  display: flex;
-  align-items: baseline;
-  gap: 0.5em;
   background: rgba(0, 0, 0, 0.55);
   border-left: 4px solid var(--accent);
   padding: 0.3em 0.6em;
@@ -162,10 +113,6 @@
 .channel-banner--visible {
   opacity: 1;
   transform: translateX(0);
-}
-.channel-banner__num {
-  font-size: 1rem;
-  color: var(--accent);
 }
 .channel-banner__name {
   font-size: 0.65rem;
@@ -217,7 +164,7 @@
 }
 
 /* ---------------------------------------------------------------------- */
-/* Mode cinéma plein écran (double-clic sur l'écran)                       */
+/* Mode cinéma plein écran (double-clic sur l'écran, ou bouton télécommande) */
 /* ---------------------------------------------------------------------- */
 
 .cinema-mode .wallpaper,
@@ -227,7 +174,8 @@
 .cinema-mode .plant,
 .cinema-mode .media-console,
 .cinema-mode .rug,
-.cinema-mode .sofa {
+.cinema-mode .sofa,
+.cinema-mode .room-cat {
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
