@@ -104,6 +104,7 @@ button {
   --wood: #ac7852;
   --wood2: #8c5c3f;
   --woodTop: #bf875d;
+  --footDark: #6b4326;
   --tvb: #e0bd94;
   --tvb2: #c6a179;
   --tvb3: #ab8663;
@@ -143,6 +144,7 @@ button {
   --wood: #4e3c3f;
   --wood2: #3b2c2e;
   --woodTop: #59433f;
+  --footDark: #201613;
   --tvb: #94806f;
   --tvb2: #765f4f;
   --tvb3: #5d4a3d;
@@ -1067,7 +1069,7 @@ button {
   width: 18px;
   height: 26px;
   border-radius: 6px;
-  background: var(--wood2);
+  background: var(--footDark);
 }
 .sofa__leg--l {
   left: 52px;
@@ -1228,7 +1230,7 @@ button {
   top: 284px;
   width: 34px;
   height: 22px;
-  background: var(--wood2);
+  background: var(--footDark);
   border-radius: 0 0 8px 8px;
 }
 .tv-legs__foot--l {
@@ -1272,6 +1274,12 @@ button {
   top: 66px;
   box-shadow: none;
 }
+/* Magnétoscope niché dans le meuble TV mobile (voir RESPONSIVE plus bas) :
+   sur desktop, ce rôle est joué par le vrai meuble média séparé
+   (.media-console/.vcr), donc masqué ici. */
+.tv-stand__vcr-mobile {
+  display: none;
+}
 .tv-set__brand {
   position: absolute;
   right: 28px;
@@ -1309,29 +1317,41 @@ button {
   background: rgba(0, 0, 0, 0.18);
 }
 
-/* Bouton "revenir à l'écran normal" du mode cinéma : masqué par défaut,
-   posé dans le coin de .tv-set (donc toujours à l'intérieur de l'écran
-   agrandi, jamais hors-champ, qu'on soit en zoom desktop ou pivoté mobile). */
+/* Bouton "revenir à l'écran normal" du mode cinéma : sibling direct de
+   #viewport (voir index.html), donc son position:fixed reste bien relatif
+   à la vraie fenêtre — jamais entraîné par le zoom/pivot du stage, jamais
+   hors-champ. Affiché/masqué en JS (voir initCinemaMode() dans
+   scripts/main.js), pas en CSS : il n'est plus descendant de #room. */
 .cinema-exit-btn {
-  display: none;
-  position: absolute;
-  right: 10px;
-  top: 10px;
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: rgba(20, 16, 12, 0.85);
+  background: linear-gradient(160deg, #4a3a34, #2a201c);
   color: #fff8ec;
-  border: none;
-  font-size: 0.9rem;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+  font-size: 1.1rem;
   line-height: 1;
   padding: 0;
-  z-index: 20;
+  cursor: pointer;
+  z-index: 2000;
+  transition: transform 0.15s ease, background 0.15s ease;
 }
-.room.cinema-mode .cinema-exit-btn {
-  display: flex;
+.cinema-exit-btn:hover {
+  transform: scale(1.08);
+  background: linear-gradient(160deg, #5c4841, #362a24);
+}
+.cinema-exit-btn:active {
+  transform: scale(0.94);
+}
+.cinema-exit-btn[hidden] {
+  display: none;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1505,12 +1525,26 @@ button {
 }
 .side-table__shadow {
   position: absolute;
-  left: -6px;
-  top: 240px;
-  width: 162px;
+  left: 6px;
+  top: 248px;
+  width: 138px;
   height: 14px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.16);
+}
+.side-table__foot {
+  position: absolute;
+  top: 234px;
+  width: 16px;
+  height: 22px;
+  background: var(--footDark);
+  border-radius: 0 0 5px 5px;
+}
+.side-table__foot--l {
+  left: 16px;
+}
+.side-table__foot--r {
+  right: 16px;
 }
 
 .media-console {
@@ -1593,6 +1627,20 @@ button {
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.16);
 }
+.media-console__foot {
+  position: absolute;
+  top: 164px;
+  width: 14px;
+  height: 20px;
+  background: var(--footDark);
+  border-radius: 0 0 5px 5px;
+}
+.media-console__foot--l {
+  left: 14px;
+}
+.media-console__foot--r {
+  right: 14px;
+}
 
 /* --- Chat qui se balade --- */
 .room-cat {
@@ -1661,7 +1709,10 @@ button {
   display: flex;
   flex-direction: column;
   gap: 9px;
-  z-index: 6;
+  /* Au-dessus de .side-table (z-index 7, pour rester devant .tv-unit sur
+     mobile où ils se chevauchent) : la télécommande doit toujours passer
+     devant le bas de la table de chevet quand ils se touchent. */
+  z-index: 8;
 }
 .remote__header {
   display: flex;
@@ -2429,6 +2480,41 @@ button {
     height: 54px;
     box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.3);
   }
+  .tv-stand__vcr-mobile {
+    display: block;
+    position: absolute;
+    left: 32px;
+    top: 20px;
+    width: 168px;
+    height: 42px;
+    border-radius: 5px;
+    background: linear-gradient(180deg, var(--tvb), var(--tvb2));
+  }
+  .tv-stand__vcr-mobile-slot {
+    position: absolute;
+    left: 9px;
+    top: 9px;
+    width: 52px;
+    height: 13px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.2);
+  }
+  .tv-stand__vcr-mobile-buttons {
+    position: absolute;
+    left: 9px;
+    bottom: 7px;
+    display: flex;
+    gap: 4px;
+  }
+  .tv-stand__vcr-mobile-buttons span {
+    width: 12px;
+    height: 6px;
+    border-radius: 2px;
+    background: var(--metal);
+  }
+  .tv-stand__vcr-mobile-buttons span:last-child {
+    background: var(--curtain);
+  }
   .tv-set__brand {
     left: 16px;
     right: auto;
@@ -2548,6 +2634,9 @@ button {
     left: -4px;
     top: 160px;
     width: 112px;
+  }
+  .side-table__foot {
+    display: none;
   }
 
   /* --- Télécommande pleine largeur, touches ≥ 50px --- */

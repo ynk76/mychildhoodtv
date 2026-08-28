@@ -149,7 +149,11 @@ class RemoteControl {
 
     this.liveSchedule.join(this.channels[idx], shared.index, currentTime, shared.paused);
     if (!this.power) this.player.pause();
-    else this._showBanner(this.channels[idx]);
+    // Uniquement au changement réel de chaîne/vidéo, pas à chaque synchro
+    // périodique avec l'admin (~4s) tant qu'on regarde la même chose —
+    // sinon le bandeau clignote en boucle. Il reste consultable en
+    // survolant l'écran (voir styles/crt.css).
+    else if (isNewVideo) this._showBanner(this.channels[idx]);
 
     this._renderLiveStatus();
     this._renderChannelList();

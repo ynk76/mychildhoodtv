@@ -62,13 +62,17 @@ function createScreensaver(canvas) {
   };
 }
 
-window.initScreensaver = function initScreensaver({ overlayEl, canvasEl, isPowerOn }) {
+window.initScreensaver = function initScreensaver({ overlayEl, canvasEl, isPowerOn, isPaused }) {
   const saver = createScreensaver(canvasEl);
   let idleTimer = null;
   let active = false;
 
   function show() {
-    if (active || !isPowerOn()) return;
+    // Regarder une vidéo sans toucher la souris pendant 3 minutes est
+    // normal — l'écran de veille ne doit couvrir l'écran QUE si la vidéo
+    // elle-même est en pause, pas seulement parce que l'utilisateur est
+    // inactif.
+    if (active || !isPowerOn() || (typeof isPaused === "function" && !isPaused())) return;
     active = true;
     overlayEl.hidden = false;
     canvasEl.style.display = "block";

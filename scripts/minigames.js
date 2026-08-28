@@ -17,7 +17,7 @@
  */
 
 (function () {
-  const POLL_MS = 1000;
+  const POLL_MS = 500;
   const DEBOUNCE_TICKS = 2; // évite de réagir à un simple instant de transition
 
   class AdDetector {
@@ -47,7 +47,13 @@
       if (index == null || !ids || !ids[index]) return;
       const expected = ids[index];
       const actual = this.player.getCurrentVideoId();
-      const looksAd = actual != null && actual !== expected;
+      // YouTube restreint souvent l'accès aux métadonnées vidéo pendant une
+      // pub (getVideoData()/getCurrentVideoId() renvoie alors null) : un
+      // retour vide compte donc AUSSI comme "ça ressemble à une pub", pas
+      // seulement un ID différent de celui attendu — sinon une pub qui
+      // masque son ID n'était jamais détectée et le mini-jeu n'apparaissait
+      // jamais.
+      const looksAd = actual == null || actual !== expected;
 
       if (looksAd) {
         this._adTicks++;

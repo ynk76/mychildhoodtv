@@ -138,8 +138,11 @@ function initStageScale() {
       tx = vw / 2 - s * (tl + tw / 2);
       ty = vh / 2 - s * (tt + th / 2);
     } else {
+      // "contain" (min), pas "cover" (max) : tout le décor doit rester
+      // visible à l'écran, quitte à garder une fine bordure sur les côtés
+      // plutôt que de rogner des éléments (télécommande, tchat...).
       const [w, h] = isMobile() ? SIZE.mobile : SIZE.desktop;
-      s = Math.max(vw / w, vh / h);
+      s = Math.min(vw / w, vh / h);
       tx = (vw - s * w) / 2;
       ty = (vh - s * h) / 2;
     }
@@ -164,13 +167,19 @@ function initCinemaMode(fitStage) {
   const exitBtn = document.getElementById("cinema-exit");
   if (!screen || !room) return null;
 
+  // #cinema-exit est un sibling de #viewport (pas un descendant de #room),
+  // pour que son position:fixed reste relatif à la vraie fenêtre — son
+  // affichage se pilote donc directement ici, pas via un sélecteur CSS
+  // ".cinema-mode ..." qui ne pourrait plus le cibler.
   function disable() {
     room.classList.remove("cinema-mode");
+    if (exitBtn) exitBtn.hidden = true;
     fitStage();
   }
 
   function toggle() {
-    room.classList.toggle("cinema-mode");
+    const active = room.classList.toggle("cinema-mode");
+    if (exitBtn) exitBtn.hidden = !active;
     fitStage();
   }
 
@@ -236,6 +245,9 @@ function initApp() {
     overlayEl: document.getElementById("screensaver-overlay"),
     canvasEl: document.getElementById("screensaver-canvas"),
     isPowerOn: () => remote.power,
+    // 2 = YT.PlayerState.PAUSED (valeur stable de l'API YouTube) : évite
+    // une dépendance à window.YT étant déjà chargé à cet instant précis.
+    isPaused: () => remote.player.getPlayerState() === 2,
   });
 }
 

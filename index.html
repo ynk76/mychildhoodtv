@@ -128,9 +128,11 @@
         <div class="sofa__cushion c1"></div>
         <div class="sofa__cushion c2"></div>
         <div class="sofa__cushion c3"></div>
+        <!-- ombre au sol AVANT les pieds dans le DOM, pour qu'elle se peigne
+             dessous (les pieds, peints après, restent nets par-dessus). -->
+        <div class="sofa__shadow"></div>
         <div class="sofa__leg sofa__leg--l"></div>
         <div class="sofa__leg sofa__leg--r"></div>
-        <div class="sofa__shadow"></div>
       </div>
 
       <!--
@@ -169,13 +171,20 @@
             <div class="tv-set__vents"></div>
             <div class="tv-set__led"></div>
           </div>
-          <button id="cinema-exit" class="cinema-exit-btn" aria-label="Revenir à l'écran normal">✕</button>
         </div>
         <span class="tv-legs__foot tv-legs__foot--l" aria-hidden="true"></span>
         <span class="tv-legs__foot tv-legs__foot--r" aria-hidden="true"></span>
         <div class="tv-stand__top" aria-hidden="true"></div>
         <div class="tv-stand" aria-hidden="true">
           <div class="tv-stand__niche tv-stand__niche--a"></div>
+          <!-- Magnétoscope mobile (masqué sur desktop, où c'est le vrai
+               meuble média séparé — .media-console/.vcr — qui joue ce rôle) :
+               l'horloge #wall-clock (enfant direct de #room, coordonnées
+               plus haut) vient se poser par-dessus, comme sur la maquette. -->
+          <div class="tv-stand__vcr-mobile" aria-hidden="true">
+            <div class="tv-stand__vcr-mobile-slot"></div>
+            <div class="tv-stand__vcr-mobile-buttons"><span></span><span></span><span></span></div>
+          </div>
           <div class="tv-stand__niche tv-stand__niche--b"></div>
           <div class="tv-set__brand">
             <span class="tv-set__brand-line1">MY CHILDHOOD</span>
@@ -209,7 +218,10 @@
           <div class="vcr__slot"></div>
           <div class="vcr__buttons"><span></span><span></span><span></span></div>
         </div>
+        <!-- ombre avant les pieds : ils se peignent nettement par-dessus. -->
         <div class="media-console__shadow"></div>
+        <span class="media-console__foot media-console__foot--l"></span>
+        <span class="media-console__foot media-console__foot--r"></span>
       </div>
 
       <div id="room-cat" class="room-cat" tabindex="0" role="button" aria-label="Chat du salon, cliquer pour le réveiller">
@@ -243,7 +255,10 @@
         </button>
         <div class="side-table__top"></div>
         <div class="side-table__body"></div>
+        <!-- ombre avant les pieds : ils se peignent nettement par-dessus. -->
         <div class="side-table__shadow"></div>
+        <span class="side-table__foot side-table__foot--l"></span>
+        <span class="side-table__foot side-table__foot--r"></span>
       </div>
 
       <section id="remote-control" class="remote" role="group" aria-label="Télécommande">
@@ -275,6 +290,13 @@
     </main>
   </div>
 </div>
+
+<!-- Bouton "quitter le plein écran" : sibling direct de #viewport (donc HORS
+     du salon mis à l'échelle) pour que son position:fixed reste bien relatif
+     à la vraie fenêtre, pas au stage transformé — voir la note sur les
+     ancêtres avec transform dans styles/main.css. Affiché/masqué en JS par
+     initCinemaMode() dans scripts/main.js. -->
+<button id="cinema-exit" class="cinema-exit-btn" hidden aria-label="Revenir à l'écran normal">✕</button>
 
 <div id="guide-overlay" class="settings-modal" hidden>
   <div class="settings-panel" role="dialog" aria-modal="true" aria-label="Programme télé">

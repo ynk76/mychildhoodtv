@@ -110,10 +110,15 @@
   font-family: var(--font-display);
   color: #fff;
   opacity: 0;
+  pointer-events: none;
   transform: translateX(-8px);
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
-.channel-banner--visible {
+.channel-banner--visible,
+/* Affiché seulement à l'allumage (classe posée en JS, voir remote.js) et
+   en survolant l'écran — plus à chaque changement de vidéo de la
+   playlist, trop fréquent (impression de clignoter en boucle). */
+#tv-screen:hover .channel-banner {
   opacity: 1;
   transform: translateX(0);
 }
