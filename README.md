@@ -19,7 +19,7 @@ python3 -m http.server 8000
 ```
 index.html            Structure de la page (décor, télé, télécommande, réglages, tchat)
 styles/
-  main.css            Mise en page, décor "cartoon", jour/nuit, météo, responsive
+  main.css            Mise en page, décor "lofi" (palette pastel jour/nuit), météo, responsive
   crt.css             Boot, statique, écran de veille, mode cinéma
 scripts/
   config.js           <-- Configuration de la chaîne par défaut
@@ -88,7 +88,7 @@ Chaque visiteur du tchat reçoit un pseudo aléatoire de personnage de dessin an
 ## Fonctionnalités
 
 **Cœur du site**
-- Décor de salon année 2000 en pur CSS, style cartoon — décor fixe, seules les animations dédiées bougent
+- Décor de salon année 2000 en pur CSS/SVG, style illustré "lofi" (aplats pastel désaturés, dégradés doux, formes arrondies, sans contours agressifs) — décor fixe, seules les animations dédiées bougent. Palette entièrement pilotée par variables CSS (`:root` pour le jour, `.room--night` pour la nuit, voir le haut de `styles/main.css`) : facile à retoucher sans toucher au reste du décor
 - Télévision avec un vrai lecteur YouTube IFrame API, diffusion "en direct" synchronisée entre tous les visiteurs (voir plus haut)
 - Télécommande utilisable à la souris et au clavier (power, volume, muet, plein écran)
 - Guide des programmes (bouton "TV" sur l'étagère) : ce qui passe en ce moment et ensuite

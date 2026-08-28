@@ -1,34 +1,75 @@
 /* ============================================================================
-   MY CHILDHOOD TV — styles de base, décor "cartoon", mise en page,
+   MY CHILDHOOD TV — styles de base, décor "lofi" (aplats pastel désaturés,
+   dégradés doux, formes arrondies, grain vintage), mise en page,
    jour/nuit, responsive. Décor fixe (pas de parallax) : seules les
    animations dédiées (lampe à lave, horloge, chat) bougent.
+
+   Palette pilotée par variables CSS sur :root (jour) et .room--night (nuit,
+   voir plus bas) : tout le décor suit automatiquement le même basculement
+   que celui déjà utilisé par decor.js (classe .room--night sur #room).
    ============================================================================ */
 
 :root {
-  --wall-day: #e8b96f;
-  --wall-day-2: #dba54f;
-  --wall-dot: rgba(60, 30, 10, 0.12);
-  --wood-dark: #4a2f1c;
-  --wood-mid: #7a4a26;
-  --wood-light: #a1703f;
-  --sofa-color: #e2453f;
-  --sofa-shadow: #b32e2e;
-  --sofa-highlight: #f06a5a;
-  --rug-color: #3fa9a0;
-  --rug-shadow: #2c7f79;
-  --olive: #4a9c3f;
-  --olive-dark: #327a2c;
-  --burgundy: #c23b4a;
-  --burnt-orange: #ff8a2b;
-  --cream: #fff6e0;
-  --ink: #2a1c12;
-  --accent: #ffce4a;
-  --sky-day: linear-gradient(#7ecbff, #cdeeff);
-  --sky-night: linear-gradient(#0a1030, #1c2350);
-  --lamp-glow: rgba(255, 206, 74, 0.35);
-  --outline: 3px solid var(--ink);
-  --font-display: "Press Start 2P", "VT323", monospace;
-  --font-body: "VT323", "Courier New", monospace;
+  --wall-day: #ecdac6;
+  --wall-day-2: #e0c8b1;
+  --wall-dot: rgba(168, 133, 100, 0.35);
+  --wood-dark: #87614a;
+  --wood-mid: #a87d5f;
+  --wood-light: #b98d6c;
+  --sofa-color: #bb9098;
+  --sofa-shadow: #a67b84;
+  --sofa-highlight: #e8cca9;
+  --rug-color: #cb9481;
+  --rug-shadow: #b3785f;
+  --olive: #93a89b;
+  --olive-dark: #78907f;
+  --burgundy: #c2705c;
+  --burnt-orange: #c58f85;
+  --cream: #f6ecdc;
+  --ink: #4d3b38;
+  --accent: #f2d7a8;
+  --sky-day: linear-gradient(#a3c6d1, #e2e9dc);
+  --sky-night: linear-gradient(#141d38, #2b3159);
+  --lamp-glow: rgba(255, 200, 120, 0.25);
+  --outline: 1.5px solid rgba(77, 59, 56, 0.16);
+  --tvb: #dcc5a6;
+  --tvb2: #c0a887;
+  --tvb3: #a68e70;
+  --metal: #d9cbb6;
+  --font-display: "Baloo 2", "Nunito", sans-serif;
+  --font-body: "Nunito", system-ui, sans-serif;
+  --font-mono: "VT323", monospace;
+}
+
+/* Palette NUIT : lune + étoiles, halo de lampe chaud, murs violine — tout le
+   décor (meubles, canapé, télé...) bascule vers des tons froids/violacés.
+   --ink s'inverse volontairement (devient clair) : c'est la couleur de
+   "texte/contour" générale, qui doit rester lisible sur un décor sombre. */
+.room--night {
+  --wall-day: #4b4463;
+  --wall-day-2: #3d3653;
+  --wall-dot: rgba(20, 15, 30, 0.35);
+  --wood-dark: #3e303a;
+  --wood-mid: #513f49;
+  --wood-light: #5c4852;
+  --sofa-color: #5c5172;
+  --sofa-shadow: #4a4060;
+  --sofa-highlight: #b0917f;
+  --rug-color: #7d5b60;
+  --rug-shadow: #6b4d52;
+  --olive: #6d857f;
+  --olive-dark: #56695f;
+  --burgundy: #8a5a52;
+  --burnt-orange: #55455d;
+  --cream: #e8dbc8;
+  --ink: #f2e6d6;
+  --accent: #ffd79a;
+  --lamp-glow: rgba(255, 190, 110, 0.55);
+  --outline: 1.5px solid rgba(242, 230, 214, 0.14);
+  --tvb: #93837c;
+  --tvb2: #75655f;
+  --tvb3: #5d4f4b;
+  --metal: #8e8275;
 }
 
 * {
@@ -81,10 +122,9 @@ button {
   transition: background 0.8s ease;
 }
 
-.room--night {
-  background: #221c2e;
-}
-
+/* Le fond jour/nuit de la pièce et le papier peint suivent automatiquement
+   --wall-day/--wall-day-2/--wall-dot, redéfinis par .room--night ci-dessus —
+   aucune règle .room--night séparée n'est nécessaire ici. */
 .wallpaper {
   position: absolute;
   inset: 0;
@@ -93,11 +133,6 @@ button {
     linear-gradient(var(--wall-day), var(--wall-day-2));
   background-size: 56px 56px, 100% 100%;
   z-index: 1;
-}
-.room--night .wallpaper {
-  background-image:
-    radial-gradient(circle at 12px 12px, rgba(0, 0, 0, 0.3) 6px, transparent 7px),
-    linear-gradient(#2b2440, #1a1628);
 }
 
 /* Window */
@@ -321,7 +356,7 @@ button {
   width: 10px;
   height: 16px;
   background: var(--wood-dark);
-  border: 2px solid var(--ink);
+  border: var(--outline);
 }
 .side-table__leg--l {
   left: 10px;
@@ -375,7 +410,7 @@ button {
   height: 24px;
   transform: translateX(-50%);
   background: var(--wood-dark);
-  border: 2px solid var(--ink);
+  border: var(--outline);
 }
 .bedside-lamp__shade {
   position: absolute;
@@ -401,8 +436,8 @@ button {
   border-radius: 0 0 10px 10px;
 }
 .room--night .bedside-lamp__shade {
-  background: #fff2b8;
-  box-shadow: 0 0 12px 3px rgba(255, 206, 74, 0.7);
+  background: var(--accent);
+  box-shadow: 0 0 12px 3px var(--lamp-glow);
 }
 .bedside-lamp:hover .bedside-lamp__shade {
   filter: brightness(1.1);
@@ -450,7 +485,7 @@ button {
   position: absolute;
   inset: 10%;
   background: #fff;
-  border: 2px solid var(--ink);
+  border: var(--outline);
   overflow: hidden;
 }
 .frame__photo svg {
@@ -470,15 +505,17 @@ button {
 .vhs {
   width: 60px;
   height: 13px;
-  background: var(--ink);
-  border: 2px solid var(--ink);
-  border-left: 6px solid var(--accent);
+  border-radius: 3px;
+  background: #5d5560;
+  border-left: 6px solid var(--sofa-highlight);
 }
 .vhs--2 {
-  border-left-color: #ff6b6b;
+  background: #6b6270;
+  border-left-color: var(--olive);
 }
 .vhs--3 {
-  border-left-color: #6bc7ff;
+  background: #544c58;
+  border-left-color: var(--burgundy);
 }
 
 /* Programme télé (façon Télé 7 Jours), posé sur l'étagère */
@@ -525,9 +562,8 @@ button {
   left: 6px;
   right: 6px;
   top: 6px;
-  background: rgba(255, 200, 90, 0.3);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), transparent 40%), linear-gradient(180deg, #f0b48f, #e08a6f);
   border-radius: 50% 50% 40% 40% / 60% 60% 30% 30%;
-  border: var(--outline);
   overflow: hidden;
 }
 .lava-lamp__blob {
@@ -536,8 +572,8 @@ button {
   height: 22%;
   left: 20%;
   border-radius: 50%;
-  background: #ff4b30;
-  opacity: 0.9;
+  background: #ffd39a;
+  opacity: 0.95;
   transition: transform 3s ease-in-out;
 }
 .lava-lamp__blob.b1 {
@@ -579,10 +615,7 @@ button {
   left: 16px;
   right: 16px;
   height: 8px;
-  background: var(--wood-dark);
-  border: 2px solid var(--ink);
-  border-top: none;
-  border-bottom: none;
+  background: var(--metal);
 }
 .lava-lamp__base {
   position: absolute;
@@ -590,9 +623,8 @@ button {
   left: 4px;
   right: 4px;
   height: 14px;
-  background: #e0a83f;
-  border: var(--outline);
-  border-radius: 4px;
+  background: var(--metal);
+  border-radius: 7px 7px 5px 5px;
 }
 
 /* Plant */
@@ -621,7 +653,7 @@ button {
   width: 18px;
   height: 92px;
   background: var(--olive);
-  border: 3px solid var(--ink);
+  border: var(--outline);
   border-radius: 60% 60% 0 0;
   transform-origin: bottom center;
 }
@@ -659,11 +691,10 @@ button {
 
 .tv-set__frame {
   position: relative;
-  background: linear-gradient(160deg, #3a3a3a, #17171a);
-  border: 4px solid var(--ink);
+  background: linear-gradient(160deg, var(--tvb), var(--tvb2) 70%, var(--tvb3));
   border-radius: 22px;
   padding: 3.5% 3.5% 6%;
-  box-shadow: 0 10px 0 var(--ink);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.22), inset 0 2px 0 rgba(255, 255, 255, 0.35);
 }
 
 .tv-set__brand {
@@ -671,9 +702,11 @@ button {
   bottom: 3%;
   right: 8%;
   font-family: var(--font-display);
-  font-size: 0.5rem;
-  color: #cfcfcf;
-  letter-spacing: 1px;
+  font-weight: 600;
+  font-size: 0.55rem;
+  letter-spacing: 3px;
+  color: rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .tv-screen {
@@ -708,22 +741,25 @@ button {
   position: absolute;
   top: -1.6em;
   right: 6%;
-  width: 1.8em;
-  height: 1.8em;
+  width: 1.9em;
+  height: 1.9em;
   border-radius: 50%;
-  background: #444;
-  color: #ddd;
-  border: 2px solid var(--ink);
+  background: radial-gradient(circle at 40% 35%, var(--metal), var(--tvb3));
+  color: var(--tvb3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  border: none;
   font-size: 0.9rem;
+  transition: transform 0.18s ease;
+}
+.tv-settings-btn:hover {
+  transform: rotate(25deg);
 }
 
 .tv-legs {
   height: 22px;
   margin: 0 12%;
   background: var(--wood-dark);
-  border: 3px solid var(--ink);
-  border-top: none;
-  border-radius: 0 0 4px 4px;
+  border-radius: 0 0 8px 8px;
 }
 
 /* Bouton "revenir à l'écran normal" : masqué par défaut, affiché seulement
@@ -741,7 +777,7 @@ button {
   border-radius: 50%;
   background: rgba(20, 16, 12, 0.85);
   color: #fff8ec;
-  border: 2px solid var(--ink);
+  border: var(--outline);
   font-size: 1rem;
   z-index: 20;
 }
@@ -778,13 +814,14 @@ button {
   top: 50%;
   right: 6%;
   transform: translateY(-50%);
-  background: #050505;
-  color: #ff3b3b;
-  font-family: var(--font-display);
-  font-size: 0.7rem;
-  padding: 4px 6px;
-  border-radius: 2px;
-  border: 2px solid var(--ink);
+  background: #241f2c;
+  color: #ffb478;
+  text-shadow: 0 0 8px rgba(255, 140, 60, 0.7);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  letter-spacing: 1px;
+  padding: 3px 7px;
+  border-radius: 4px;
 }
 @keyframes clock-glitch {
   0%,
@@ -814,7 +851,7 @@ button {
   width: min(92vw, 1320px);
   height: 26%;
   background: var(--rug-color);
-  border: 6px solid var(--ink);
+  border: var(--outline);
   border-radius: 22px;
   z-index: 2;
   box-shadow: inset 0 0 0 6px var(--rug-shadow);
@@ -834,19 +871,18 @@ button {
   content: "";
   position: absolute;
   inset: 0;
-  background: var(--sofa-color);
-  border: var(--outline);
-  border-radius: 26px 26px 6px 6px;
-  box-shadow: inset 0 -14px 0 var(--sofa-shadow);
+  background: linear-gradient(180deg, var(--sofa-color), var(--sofa-shadow));
+  border-radius: 34px 34px 10px 10px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
 }
 .sofa__cushion {
   position: absolute;
   top: -14%;
   width: 22%;
   height: 40%;
-  background: var(--sofa-highlight);
-  border: var(--outline);
-  border-radius: 14px;
+  background: linear-gradient(160deg, var(--sofa-highlight), var(--sofa-color));
+  border-radius: 18px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
 }
 .sofa__cushion.c1 {
   left: 10%;
@@ -862,20 +898,31 @@ button {
 .room-cat {
   position: absolute;
   z-index: 11;
-  font-size: 3.4rem;
-  line-height: 1;
+  cursor: pointer;
   transform: scaleX(-1);
   transition: top 5s ease-in-out, left 5s ease-in-out, transform 0.4s ease;
-  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(2px 3px 4px rgba(0, 0, 0, 0.25));
+}
+.room-cat__svg {
+  display: block;
+}
+.room-cat__awake {
+  display: none;
+}
+.room-cat.cat--awake .room-cat__asleep {
+  display: none;
+}
+.room-cat.cat--awake .room-cat__awake {
+  display: block;
 }
 .room-cat.cat--walking {
   transform: scaleX(-1) scale(1.05);
 }
 .room-cat.cat--lying {
-  transform: scaleX(-1) rotate(-10deg) scaleY(0.82);
+  transform: scaleX(-1) rotate(-6deg) scaleY(0.9);
 }
 .room-cat.cat--awake {
-  transform: scaleX(-1) scale(1.2);
+  transform: scaleX(-1) scale(1.15);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1170,7 +1217,7 @@ button {
   z-index: 200;
   background: linear-gradient(160deg, #4a4744, #2a2827);
   color: var(--accent);
-  border: 3px solid var(--ink);
+  border: var(--outline);
   border-radius: 12px;
   padding: 0.6em 1em;
   font-size: 1rem;
@@ -1245,7 +1292,7 @@ button {
   z-index: 200;
   width: 210px;
   background: linear-gradient(160deg, #2c2a28, #171615);
-  border: 3px solid var(--ink);
+  border: var(--outline);
   border-radius: 16px;
   padding: 0.9em;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
