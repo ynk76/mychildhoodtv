@@ -140,6 +140,9 @@
   justify-content: center;
   overflow: hidden;
 }
+.power-off-overlay[hidden] {
+  display: none;
+}
 .power-off-overlay__scan {
   width: 100%;
   height: 6px;

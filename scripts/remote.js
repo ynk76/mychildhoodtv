@@ -75,6 +75,13 @@ class RemoteControl {
 
     if (this.sharedChannel.available) {
       this.sharedChannel.onChange((shared) => this._applySharedChannel(shared));
+      // Filet de sécurité : si aucune chaîne partagée n'a encore jamais été
+      // "amorcée" côté Firebase (personne n'a encore cliqué sur une chaîne
+      // dans les réglages), on ne doit pas rester muet indéfiniment — on
+      // démarre quand même avec la chaîne locale par défaut.
+      setTimeout(() => {
+        if (!this.liveSchedule.playlistIds) this.liveSchedule.start(this.currentChannel());
+      }, 3000);
     }
 
     this._bindButtons();
