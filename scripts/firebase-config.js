@@ -28,11 +28,11 @@
  */
 
 window.FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  databaseURL: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: "",
+  apiKey: "AIzaSyD3Euz_5Q2fm1-uZVHnvE0Asl7S0ohS8MI",
+  authDomain: "my-childhood-tv.firebaseapp.com",
+  databaseURL: "https://my-childhood-tv-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "my-childhood-tv",
+  storageBucket: "my-childhood-tv.firebasestorage.app",
+  messagingSenderId: "966815377524",
+  appId: "1:966815377524:web:975cbb5f0be2f70d048921",
 };
