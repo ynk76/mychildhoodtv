@@ -4,12 +4,6 @@
  * chevet jour/nuit, météo derrière la fenêtre.
  */
 
-function initHoverSounds(root) {
-  root.querySelectorAll("[data-blip]").forEach((el) => {
-    el.addEventListener("mouseenter", () => Audio2000.hoverBlip());
-  });
-}
-
 function initLavaLamp() {
   const lamp = document.getElementById("lava-lamp");
   if (!lamp) return;
@@ -140,7 +134,6 @@ function initWeather() {
 }
 
 window.initDecor = function initDecor() {
-  initHoverSounds(document);
   initLavaLamp();
   initClock();
   initWanderingCat();

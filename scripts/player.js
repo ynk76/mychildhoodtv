@@ -76,12 +76,17 @@ class TVPlayer {
   }
 
   playChannel(channel) {
+    this.playChannelAt(channel, 0);
+  }
+
+  /** Comme playChannel, mais démarre directement au N-ième élément de la playlist. */
+  playChannelAt(channel, index) {
     if (!this.ready || !this.player || typeof this.player.loadPlaylist !== "function") {
       this._pendingChannel = channel;
       return;
     }
     try {
-      this.player.loadPlaylist({ list: channel.playlistId, listType: "playlist", index: 0 });
+      this.player.loadPlaylist({ list: channel.playlistId, listType: "playlist", index: index || 0 });
     } catch (e) {
       /* playlist invalide fournie par l'utilisateur : silencieux */
     }
@@ -137,6 +142,15 @@ class TVPlayer {
 
   nextVideo() {
     if (this.ready && this.player) this.player.nextVideo();
+  }
+
+  getCurrentTime() {
+    if (!this.ready || !this.player || typeof this.player.getCurrentTime !== "function") return null;
+    try {
+      return this.player.getCurrentTime();
+    } catch (e) {
+      return null;
+    }
   }
 
   getVideoTitle() {

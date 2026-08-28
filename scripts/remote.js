@@ -60,10 +60,15 @@ class RemoteControl {
       initialVolume: this.volume,
       onReady: () => {
         this._applyVolumeState();
-        if (this.power) this.liveSchedule.start(this.currentChannel());
+        // on démarre toujours la diffusion en arrière-plan (pour être déjà
+        // synchronisé dès l'allumage), mais elle ne joue/affiche rien tant
+        // que la télé est éteinte (voir LiveSchedule.active)
+        this.liveSchedule.start(this.currentChannel());
+        if (!this.power) this.player.pause();
       },
     });
     this.liveSchedule = new LiveSchedule(this.player);
+    this.liveSchedule.active = this.power;
 
     this._bindButtons();
     this._bindSettings();
@@ -120,11 +125,10 @@ class RemoteControl {
     Audio2000.remoteClick();
     this._updatePowerUI(true);
     if (this.power) {
-      if (this.liveSchedule.live) this.liveSchedule.resumeLive();
-      else this.player.play();
+      this.liveSchedule.resume();
       this._showBanner(this.currentChannel());
     } else {
-      this.player.pause();
+      this.liveSchedule.suspend();
     }
   }
 
@@ -158,7 +162,7 @@ class RemoteControl {
     Audio2000.staticBurst(0.4);
     setTimeout(() => {
       staticEl.hidden = true;
-      if (this.power) this.liveSchedule.start(channel);
+      this.liveSchedule.start(channel);
       this._showBanner(channel);
     }, 400);
   }
@@ -290,7 +294,6 @@ class RemoteControl {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "settings-item__select";
-      btn.dataset.blip = "true";
       btn.textContent = channel.name;
       if (index === this.currentIndex) btn.classList.add("settings-item__select--current");
       btn.addEventListener("click", () => {
@@ -298,7 +301,6 @@ class RemoteControl {
         this._renderChannelList();
         this._renderLiveStatus();
       });
-      btn.addEventListener("mouseenter", () => Audio2000.hoverBlip());
       li.appendChild(btn);
 
       if (channel.isCustom) {
