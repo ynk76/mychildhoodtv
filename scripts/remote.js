@@ -11,6 +11,14 @@
 
 const SETTINGS_PASSWORD = "Foot2Rue";
 
+// L'admin publie sa position toutes les ~4s (voir ADMIN_PUBLISH_INTERVAL_MS
+// dans admin-player.js) tant que son lecteur studio tourne. Si la dernière
+// publication reçue est plus vieille que ce seuil, personne ne pilote plus
+// activement la diffusion (onglet fermé, navigateur éteint...) : on ignore
+// cette position périmée (sinon on calculerait un rattrapage de plusieurs
+// minutes) et chaque visiteur repart sur une vidéo aléatoire.
+const ADMIN_STALE_THRESHOLD_MS = 12000;
+
 /** Essaie d'extraire un ID de playlist YouTube utilisable depuis une URL ou un ID collé. */
 function parsePlaylistInput(raw) {
   const value = raw.trim();
@@ -104,6 +112,18 @@ class RemoteControl {
 
   /** Reçu de Firebase : l'admin a choisi/avancé/mis en pause la diffusion, pour tout le monde. */
   _applySharedChannel(shared) {
+    const age = this.sharedChannel.serverNow() - shared.updatedAt;
+    if (age > ADMIN_STALE_THRESHOLD_MS) {
+      if (!this._noAdminMode) {
+        this._noAdminMode = true;
+        this.liveSchedule.startDefault(this.currentChannel());
+        if (!this.power) this.player.pause();
+      }
+      this._renderLiveStatus();
+      return;
+    }
+    this._noAdminMode = false;
+
     let idx = this.channels.findIndex((c) => c.playlistId === shared.playlistId);
     if (idx === -1) {
       this.channels = this.channels.concat([{ name: shared.name, playlistId: shared.playlistId, number: -1 }]);
@@ -118,7 +138,7 @@ class RemoteControl {
 
     // On rattrape le temps écoulé depuis que l'admin a publié cette
     // position, pour rejoindre "en cours" comme une vraie chaîne de télé.
-    const elapsed = Math.max(0, (Date.now() - shared.updatedAt) / 1000);
+    const elapsed = Math.max(0, age / 1000);
     const currentTime = (shared.currentTime || 0) + (shared.paused ? 0 : elapsed);
 
     if (isNewVideo && this.power) {
@@ -378,6 +398,8 @@ class RemoteControl {
   _renderLiveStatus() {
     if (!this.sharedChannel.available) {
       this.dom.liveStatus.textContent = "🔴 Chaîne par défaut (pas de synchro entre appareils, Firebase non configuré)";
+    } else if (this._noAdminMode) {
+      this.dom.liveStatus.textContent = "🎲 Personne ne pilote la diffusion : vidéo aléatoire";
     } else {
       this.dom.liveStatus.textContent = this.liveSchedule.paused ? "⏸ En pause" : "🔴 En direct";
     }

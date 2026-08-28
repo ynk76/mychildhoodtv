@@ -14,6 +14,15 @@
  *  direct même s'il arrive après coup — exactement comme rejoindre une
  *  vraie chaîne de télé en cours de diffusion.
  *
+ *  "updatedAt" est une estampille SERVEUR Firebase (ServerValue.TIMESTAMP),
+ *  pas l'horloge locale de l'admin : deux appareils n'ont presque jamais la
+ *  même heure système (souvent plusieurs minutes d'écart), donc comparer
+ *  l'heure locale d'un visiteur à l'heure locale de l'admin aurait rendu le
+ *  calcul de rattrapage complètement faux. En passant par l'heure serveur
+ *  (et en compensant le décalage d'horloge de CET appareil via
+ *  `.info/serverTimeOffset`, voir serverNow()), tout le monde raisonne sur
+ *  la même horloge de référence.
+ *
  *  Sans Firebase configuré : SharedChannel.available vaut false et le site
  *  revient au fonctionnement local (chaîne par défaut identique pour tous
  *  de toute façon, car codée en dur dans config.js, mais sans garantie de
@@ -25,10 +34,25 @@ class SharedChannel {
   constructor() {
     this.db = window.getSharedDatabase ? window.getSharedDatabase() : null;
     this.ref = this.db ? this.db.ref("liveChannel") : null;
+    this._serverTimeOffset = 0;
+    if (this.db) {
+      try {
+        this.db.ref(".info/serverTimeOffset").on("value", (snapshot) => {
+          this._serverTimeOffset = snapshot.val() || 0;
+        });
+      } catch (e) {
+        /* silencieux */
+      }
+    }
   }
 
   get available() {
     return !!this.ref;
+  }
+
+  /** Heure serveur estimée : compense le décalage d'horloge de cet appareil. */
+  serverNow() {
+    return Date.now() + this._serverTimeOffset;
   }
 
   /** Appelé à la connexion, puis à chaque mise à jour de l'admin. */
@@ -57,7 +81,7 @@ class SharedChannel {
       index,
       currentTime,
       paused: !!paused,
-      updatedAt: Date.now(),
+      updatedAt: firebase.database.ServerValue.TIMESTAMP,
     });
   }
 }

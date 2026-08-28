@@ -69,6 +69,7 @@ class AdminPlayer {
       events: {
         onReady: () => {
           this.ready = true;
+          this.player.mute();
           this._cue(this.channel);
           this._startPublishing();
         },
@@ -80,6 +81,7 @@ class AdminPlayer {
     if (!this.ready) return;
     try {
       this.player.cuePlaylist({ list: channel.playlistId, listType: "playlist", index: 0 });
+      this.player.mute();
       this._lastPublishedIndex = null;
     } catch (e) {
       /* silencieux */
@@ -94,6 +96,12 @@ class AdminPlayer {
   _publishIfChanged() {
     if (!this.ready || !this.player || !this.channel) return;
     try {
+      // Garde-fou : le lecteur studio ne doit jamais être audible (double son
+      // avec le lecteur du salon). On réaffirme régulièrement le mute, au cas
+      // où l'admin l'aurait décoché par mégarde depuis les contrôles natifs.
+      if (typeof this.player.isMuted === "function" && !this.player.isMuted()) {
+        this.player.mute();
+      }
       const state = this.player.getPlayerState();
       // -1 (non démarré) ou 5 (mise en attente) : rien à publier pour l'instant
       if (state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.PAUSED) return;
