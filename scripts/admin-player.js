@@ -14,9 +14,17 @@
  *  SharedChannel ; c'est ce que la télé du salon de TOUS les visiteurs
  *  reproduit.
  *
- *  Ce lecteur n'existe que pendant que les réglages sont ouverts et
- *  déverrouillés — créé à l'ouverture, détruit à la fermeture — pour ne pas
- *  garder deux lecteurs YouTube actifs en permanence.
+ *  Ce lecteur est créé une seule fois (à la première ouverture des réglages
+ *  déverrouillés) puis reste actif en permanence, même une fois les réglages
+ *  refermés : sinon, à chaque fermeture, on perdrait la diffusion en direct
+ *  pour tout le monde. Fermer les réglages ne fait donc que le rendre
+ *  visuellement invisible (voir RemoteControl._positionAdminPlayer) — il
+ *  continue de jouer et de publier sa position en arrière-plan.
+ *
+ *  Il est volontairement muet (mute:1) : son rôle est uniquement de piloter
+ *  et publier la position, le son entendu par tout le monde (admin inclus)
+ *  vient du lecteur du salon (scripts/player.js), pour éviter un écho à
+ *  deux voix légèrement désynchronisées.
  * ============================================================================
  */
 
@@ -54,6 +62,8 @@ class AdminPlayer {
         controls: 1,
         rel: 0,
         modestbranding: 1,
+        cc_load_policy: 0,
+        mute: 1,
         listType: "playlist",
       },
       events: {
@@ -102,18 +112,6 @@ class AdminPlayer {
     }
   }
 
-  destroy() {
-    clearInterval(this._publishTimer);
-    if (this.player && typeof this.player.destroy === "function") {
-      try {
-        this.player.destroy();
-      } catch (e) {
-        /* silencieux */
-      }
-    }
-    this.player = null;
-    this.ready = false;
-  }
 }
 
 window.AdminPlayer = AdminPlayer;

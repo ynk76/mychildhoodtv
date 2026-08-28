@@ -89,6 +89,8 @@ function initApp() {
     settingsPassword: document.getElementById("settings-password"),
     settingsAuthError: document.getElementById("settings-auth-error"),
     settingsBody: document.getElementById("settings-body"),
+    adminPlayerEl: document.getElementById("admin-player"),
+    adminPlayerSlot: document.getElementById("admin-player-slot"),
     settingsForm: document.getElementById("settings-form"),
     settingsName: document.getElementById("settings-name"),
     settingsUrl: document.getElementById("settings-url"),
@@ -98,6 +100,8 @@ function initApp() {
     guideNow: document.getElementById("guide-now"),
     guideNext: document.getElementById("guide-next"),
     guideClose: document.getElementById("guide-close"),
+    minigameOverlay: document.getElementById("minigame-overlay"),
+    minigameMount: document.getElementById("minigame-mount"),
   });
 
   remote.onFullscreenRequest = toggleCinema;

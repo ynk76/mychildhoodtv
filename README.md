@@ -29,7 +29,8 @@ scripts/
   schedule.js            Applique au lecteur du salon une position "en direct" reçue
   firebase-init.js         Initialise Firebase une seule fois (partagé tchat + chaîne en direct)
   shared-channel.js        La position en direct (chaîne + vidéo + seconde), partagée entre tous
-  admin-player.js          Le lecteur "studio" (natif, visible dans les réglages admin)
+  admin-player.js          Le lecteur "studio" (natif, visible dans les réglages admin, jamais arrêté)
+  minigames.js             Détection de pub (best-effort) + mini-jeux (morpion, puissance 4, pong)
   decor.js               Easter eggs (lampe à lave, horloge, chat), jour/nuit, météo
   screensaver.js          Écran de veille rétro après inactivité
   remote.js                Télécommande + réglages protégés par mot de passe + guide TV
@@ -42,14 +43,17 @@ scripts/
 
 Sans serveur permanent, il faut bien qu'une machine décide "ce qui passe en ce moment" — c'est l'admin qui joue ce rôle, via un vrai lecteur YouTube (natif, avec ses contrôles normaux) visible dans les réglages (`scripts/admin-player.js`) :
 
-1. L'admin choisit une chaîne, puis la pilote avec l'interface YouTube normale (lecture, pause, avancer, vidéo suivante...) — plus fiable qu'une télécommande maison, puisque ça s'appuie sur le lecteur officiel.
+1. L'admin choisit une chaîne, puis la pilote avec l'interface YouTube normale (lecture, pause, avancer, vidéo suivante...) — plus fiable qu'une télécommande maison, puisque ça s'appuie sur le lecteur officiel. Les sous-titres sont désactivés par défaut sur ce lecteur comme sur celui du salon.
 2. Toutes les ~4 secondes, la position de ce lecteur (chaîne + numéro de vidéo dans la playlist + seconde + en pause ou non) est publiée dans Firebase (`scripts/shared-channel.js`), la même base que le tchat.
-3. Tous les visiteurs (télé du salon) reçoivent cette position en temps réel et la reproduisent, en rattrapant le temps écoulé depuis la publication — comme rejoindre une vraie chaîne de télé déjà en cours. Une fois la playlist chargée à la bonne vidéo, elle continue nativement toute seule (YouTube gère lui-même la suite de la playlist) : aucune intervention JS répétée qui risquerait de perturber une publicité en cours.
+3. Tous les visiteurs (télé du salon) reçoivent cette position en temps réel et rejoignent la même vidéo en rattrapant le temps écoulé depuis la publication — comme rejoindre une vraie chaîne de télé déjà en cours. Si c'est déjà la bonne vidéo à l'écran, le lecteur du salon vérifie juste qu'il n'a pas dérivé de plus de **2 secondes** par rapport à l'admin, et se resynchronise (seekTo) uniquement dans ce cas — jamais à chaque mise à jour, pour ne pas perturber une publicité en cours (voir plus bas).
+4. **Le lecteur studio ne s'arrête jamais** une fois lancé : fermer les réglages le rend juste invisible (réduit à 2x2 pixels dans un coin de l'écran, jamais en `display:none`, qui interromprait sa lecture) — il continue de jouer et de publier sa position en arrière-plan. Le rouvrir affiche à nouveau le même lecteur, toujours en cours, sans le recharger.
+5. **Sans admin connecté** (personne n'a encore publié de position, ou Firebase non configuré), chaque visiteur démarre sur une vidéo **aléatoire** de la playlist (lecture mélangée native YouTube) plutôt que toujours la même — recharger la page fait tomber sur une autre vidéo à chaque fois.
 
 **Limites à connaître** :
 - La synchronisation fine entre appareils dépend de la fraîcheur de la dernière publication de l'admin ; si personne n'a de lecteur studio ouvert depuis longtemps, chaque appareil continue de son côté sur la playlist native de YouTube (qui reste cohérente, juste sans garantie de être exactement au même endroit à la seconde près).
-- YouTube n'expose aucun moyen fiable de détecter/zapper une publicité depuis un site externe (volontaire de leur part) : c'est un lecteur YouTube tout à fait normal.
-- **Sans Firebase configuré**, chaque appareil reste indépendant et démarre simplement la chaîne par défaut depuis le début (codée en dur dans `config.js`).
+- YouTube n'expose aucun moyen fiable de détecter/zapper une publicité depuis un site externe (volontaire de leur part) : c'est un lecteur YouTube tout à fait normal. La détection de pub (voir section mini-jeux ci-dessous) comme la correction de dérive s'appuient donc sur une heuristique (comparer la vidéo réellement affichée à celle attendue dans la playlist), pas sur un vrai signal YouTube.
+- Garder le lecteur studio actif en arrière-plan quand l'onglet réglages est fermé dépend du bon vouloir du navigateur : certains navigateurs peuvent throttle un iframe très peu visible pour économiser la batterie. Le lecteur reste techniquement dans la page (jamais retiré du DOM ni mis en `display:none`) pour minimiser ce risque, mais ce n'est pas garanti à 100%.
+- **Sans Firebase configuré**, chaque appareil reste indépendant et démarre simplement la chaîne par défaut (vidéo aléatoire, voir ci-dessus).
 
 ## Réglages protégés par mot de passe
 
@@ -91,7 +95,8 @@ Chaque visiteur du tchat reçoit un pseudo aléatoire de personnage de dessin an
 
 **Bonus**
 - Écran de démarrage rétro façon connexion bas débit
-- Réglages protégés par mot de passe, avec un vrai lecteur YouTube "studio" pour piloter la diffusion
+- Réglages protégés par mot de passe, avec un vrai lecteur YouTube "studio" pour piloter la diffusion (jamais interrompu, voir plus haut)
+- Mini-jeux pendant les pubs (morpion, puissance 4, pong) : dès qu'une pub (ou un enchaînement de plusieurs pubs) est détectée, un mini-jeu aléatoire apparaît le temps de la coupure et disparaît au retour du programme
 - Tchat en direct entre visiteurs (Firebase, voir plus haut)
 - Écran de veille rétro après quelques minutes d'inactivité
 - Cycle jour/nuit (lampe de chevet à côté de la télé) + météo qui change derrière la fenêtre le jour, ciel étoilé la nuit
@@ -102,6 +107,6 @@ Chaque visiteur du tchat reçoit un pseudo aléatoire de personnage de dessin an
 
 ## Contraintes techniques respectées
 
-- Un seul lecteur YouTube instancié côté salon pour tous les visiteurs ; un second lecteur "studio" n'existe que le temps où l'admin a les réglages ouverts et déverrouillés (détruit à la fermeture)
+- Un seul lecteur YouTube instancié côté salon pour tous les visiteurs ; un second lecteur "studio" existe une fois créé (à la première ouverture des réglages déverrouillés) et reste actif en continu pour ne jamais couper la diffusion en direct
 - Aucune dépendance serveur pour la télé (tout tourne côté front) ; le tchat utilise Firebase (backend géré, pas de serveur à maintenir)
 - Aucun fichier audio/image externe : les sons sont synthétisés (Web Audio API) et le décor est fait en CSS/SVG inline

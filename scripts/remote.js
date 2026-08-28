@@ -72,6 +72,15 @@ class RemoteControl {
     });
     this.liveSchedule = new LiveSchedule(this.player);
 
+    this.minigameOverlay = new MinigameOverlay({ containerEl: dom.minigameMount });
+    this.adDetector = new AdDetector({
+      player: this.player,
+      liveSchedule: this.liveSchedule,
+      onAdSequenceStart: () => this._onAdSequenceStart(),
+      onAdSequenceEnd: () => this._onAdSequenceEnd(),
+    });
+    this.adDetector.start();
+
     if (this.sharedChannel.available) {
       this.sharedChannel.onChange((shared) => this._applySharedChannel(shared));
       // Filet de sécurité : si l'admin n'a encore jamais rien publié, on ne
@@ -174,7 +183,23 @@ class RemoteControl {
       this._showBanner(this.currentChannel());
     } else {
       this.player.pause();
+      this._onAdSequenceEnd();
     }
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Détection de pub + mini-jeux                                        */
+  /* ---------------------------------------------------------------- */
+
+  _onAdSequenceStart() {
+    if (!this.power) return;
+    this.dom.minigameOverlay.hidden = false;
+    this.minigameOverlay.show();
+  }
+
+  _onAdSequenceEnd() {
+    this.dom.minigameOverlay.hidden = true;
+    this.minigameOverlay.hide();
   }
 
   _updatePowerUI(animate) {
@@ -247,11 +272,14 @@ class RemoteControl {
       const opening = d.settingsModal.hidden;
       d.settingsModal.hidden = !d.settingsModal.hidden;
       if (opening) this._openSettings();
-      else this._teardownAdminPlayer();
+      else this._positionAdminPlayer();
     });
     d.settingsClose.addEventListener("click", () => {
       d.settingsModal.hidden = true;
-      this._teardownAdminPlayer();
+      this._positionAdminPlayer();
+    });
+    window.addEventListener("resize", () => {
+      if (!d.settingsModal.hidden && !d.settingsBody.hidden) this._positionAdminPlayer();
     });
 
     d.settingsAuthForm.addEventListener("submit", (e) => {
@@ -289,6 +317,7 @@ class RemoteControl {
     this.dom.settingsAuth.hidden = false;
     this.dom.settingsBody.hidden = true;
     this.dom.settingsAuthError.hidden = true;
+    this._positionAdminPlayer();
   }
 
   _showSettingsBody() {
@@ -301,12 +330,48 @@ class RemoteControl {
     }
     this._renderChannelList();
     this._renderLiveStatus();
+    this._positionAdminPlayer();
   }
 
-  _teardownAdminPlayer() {
-    if (this.adminPlayer) {
-      this.adminPlayer.destroy();
-      this.adminPlayer = null;
+  /**
+   * Le vrai lecteur studio (#admin-player) vit en dehors du panneau de
+   * réglages (voir styles/main.css) pour ne jamais être mis en display:none
+   * — ce qui interromprait sa lecture — quand on ferme les réglages. On le
+   * superpose donc "à la main" par-dessus son emplacement réservé
+   * (#admin-player-slot) tant que les réglages sont ouverts et déverrouillés,
+   * et on le réduit à un coin de 2x2px sinon (toujours techniquement
+   * "visible" pour le navigateur, juste imperceptible).
+   */
+  _positionAdminPlayer() {
+    const el = this.dom.adminPlayerEl;
+    const slot = this.dom.adminPlayerSlot;
+    if (!el) return;
+    const docked = !this.dom.settingsModal.hidden && !this.dom.settingsBody.hidden;
+    if (docked && slot) {
+      const r = slot.getBoundingClientRect();
+      Object.assign(el.style, {
+        top: r.top + "px",
+        left: r.left + "px",
+        width: r.width + "px",
+        height: r.height + "px",
+        bottom: "auto",
+        right: "auto",
+        opacity: "1",
+        pointerEvents: "auto",
+        border: "2px solid var(--wood-mid)",
+      });
+    } else {
+      Object.assign(el.style, {
+        top: "auto",
+        left: "auto",
+        bottom: "0",
+        right: "0",
+        width: "2px",
+        height: "2px",
+        opacity: "0.01",
+        pointerEvents: "none",
+        border: "none",
+      });
     }
   }
 

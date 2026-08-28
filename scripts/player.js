@@ -17,7 +17,7 @@ class TVPlayer {
     this.onStateChangeCallback = onStateChange;
     this.player = null;
     this.ready = false;
-    this._pending = null; // { channel, index, startSeconds } demandé avant que le lecteur soit prêt
+    this._pending = null; // { type: "at"|"shuffled", channel, index, startSeconds } avant que le lecteur soit prêt
     this._loadApi();
   }
 
@@ -57,6 +57,7 @@ class TVPlayer {
         disablekb: 1,
         fs: 0,
         iv_load_policy: 3,
+        cc_load_policy: 0, // pas de sous-titres affichés par défaut
         modestbranding: 1,
         rel: 0,
         playsinline: 1,
@@ -66,10 +67,16 @@ class TVPlayer {
         onReady: (e) => {
           this.ready = true;
           e.target.setVolume(this.initialVolume);
+          try {
+            e.target.setOption("captions", "reload", false);
+          } catch (err) {
+            /* pas grave si indisponible */
+          }
           if (this._pending) {
-            const { channel, index, startSeconds } = this._pending;
+            const pending = this._pending;
             this._pending = null;
-            this.loadPlaylistAt(channel, index, startSeconds);
+            if (pending.type === "shuffled") this.playChannelShuffled(pending.channel);
+            else this.loadPlaylistAt(pending.channel, pending.index, pending.startSeconds);
           }
           if (typeof this.onReadyCallback === "function") this.onReadyCallback(e);
         },
@@ -89,18 +96,17 @@ class TVPlayer {
 
   /**
    * Charge une playlist directement au N-ième élément, à la Xème seconde.
-   * C'est la seule méthode de chargement : rejoindre "en cours" (comme une
-   * vraie TV) ou démarrer au début ne sont que des cas particuliers
-   * (index/startSeconds à 0). Une fois chargée, la playlist avance ensuite
-   * toute seule via le mécanisme natif de YouTube (pas d'intervention JS
-   * nécessaire, ce qui évite bien des soucis avec les publicités).
+   * Rejoindre "en cours" (comme une vraie TV) ou démarrer au début ne sont
+   * que des cas particuliers (index/startSeconds à 0). Une fois chargée, la
+   * playlist avance ensuite toute seule via le mécanisme natif de YouTube.
    */
   loadPlaylistAt(channel, index, startSeconds) {
     if (!this.ready || !this.player || typeof this.player.loadPlaylist !== "function") {
-      this._pending = { channel, index: index || 0, startSeconds: startSeconds || 0 };
+      this._pending = { type: "at", channel, index: index || 0, startSeconds: startSeconds || 0 };
       return;
     }
     try {
+      this.player.setShuffle(false);
       this.player.loadPlaylist({
         list: channel.playlistId,
         listType: "playlist",
@@ -112,12 +118,39 @@ class TVPlayer {
     }
   }
 
+  /**
+   * Charge une playlist en lecture aléatoire (nouvelle vidéo à chaque
+   * appel/rechargement de page) : utilisé quand personne ne pilote la
+   * diffusion depuis les réglages admin.
+   */
+  playChannelShuffled(channel) {
+    if (!this.ready || !this.player || typeof this.player.loadPlaylist !== "function") {
+      this._pending = { type: "shuffled", channel };
+      return;
+    }
+    try {
+      this.player.setShuffle(true);
+      this.player.loadPlaylist({ list: channel.playlistId, listType: "playlist" });
+    } catch (e) {
+      /* silencieux */
+    }
+  }
+
   play() {
     if (this.ready) this.player.playVideo();
   }
 
   pause() {
     if (this.ready) this.player.pauseVideo();
+  }
+
+  seekTo(seconds) {
+    if (!this.ready || !this.player) return;
+    try {
+      this.player.seekTo(seconds, true);
+    } catch (e) {
+      /* silencieux */
+    }
   }
 
   setVolume(vol) {
@@ -152,6 +185,24 @@ class TVPlayer {
     }
   }
 
+  getCurrentTime() {
+    if (!this.ready || !this.player || typeof this.player.getCurrentTime !== "function") return null;
+    try {
+      return this.player.getCurrentTime();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  getPlayerState() {
+    if (!this.ready || !this.player || typeof this.player.getPlayerState !== "function") return null;
+    try {
+      return this.player.getPlayerState();
+    } catch (e) {
+      return null;
+    }
+  }
+
   getVideoTitle() {
     if (!this.ready || !this.player || typeof this.player.getVideoData !== "function") return "";
     try {
@@ -159,6 +210,17 @@ class TVPlayer {
       return (data && data.title) || "";
     } catch (e) {
       return "";
+    }
+  }
+
+  /** ID de la vidéo actuellement chargée (contenu OU publicité — voir scripts/minigames.js). */
+  getCurrentVideoId() {
+    if (!this.ready || !this.player || typeof this.player.getVideoData !== "function") return null;
+    try {
+      const data = this.player.getVideoData();
+      return (data && data.video_id) || null;
+    } catch (e) {
+      return null;
     }
   }
 }

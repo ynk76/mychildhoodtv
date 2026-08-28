@@ -107,6 +107,10 @@
           <div id="power-off-overlay" class="power-off-overlay" hidden aria-hidden="true">
             <div class="power-off-overlay__scan"></div>
           </div>
+          <div id="minigame-overlay" class="minigame-overlay" hidden>
+            <p class="minigame-overlay__hint">📺 Pub en cours — petite pause jeu !</p>
+            <div id="minigame-mount" class="minigame-overlay__mount"></div>
+          </div>
         </div>
         <div class="tv-set__brand">MY CHILDHOOD TV</div>
       </div>
@@ -180,10 +184,8 @@
     <div id="settings-body" hidden>
       <span id="settings-live-status" class="settings-live-status">🔴 En direct</span>
 
-      <p class="settings-hint">Lecteur studio : choisis une chaîne ci-dessous, puis pilote-la avec les contrôles YouTube normaux (lecture, pause, avancer...). Tout ce qui se passe ici est diffusé en direct sur la télé du salon, pour tout le monde.</p>
-      <div class="admin-player-wrap">
-        <div id="admin-player"></div>
-      </div>
+      <p class="settings-hint">Lecteur studio : choisis une chaîne ci-dessous, puis pilote-la avec les contrôles YouTube normaux (lecture, pause, avancer...). Tout ce qui se passe ici est diffusé en direct sur la télé du salon, pour tout le monde — et continue même une fois les réglages refermés.</p>
+      <div id="admin-player-slot" class="admin-player-wrap"></div>
 
       <ul id="settings-list" class="settings-list"></ul>
 
@@ -236,6 +238,8 @@
   </form>
 </div>
 
+<div id="admin-player" class="admin-player" aria-hidden="true"></div>
+
 <script src="scripts/config.js"></script>
 <script src="scripts/storage.js"></script>
 <script src="scripts/audio.js"></script>
@@ -247,6 +251,7 @@
 <script src="scripts/firebase-init.js"></script>
 <script src="scripts/shared-channel.js"></script>
 <script src="scripts/admin-player.js"></script>
+<script src="scripts/minigames.js"></script>
 <script src="scripts/chat.js"></script>
 <script src="scripts/decor.js"></script>
 <script src="scripts/screensaver.js"></script>

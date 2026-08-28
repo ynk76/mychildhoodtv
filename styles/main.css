@@ -1005,9 +1005,132 @@ button {
   overflow: hidden;
   margin-bottom: 0.8em;
 }
-.admin-player-wrap #admin-player {
+
+/*
+ * Le lecteur studio réel (#admin-player) ne vit PAS dans .admin-player-wrap :
+ * il est en position:fixed au niveau du document, pour ne jamais être mis en
+ * display:none (ce qui interromprait sa lecture) quand les réglages se
+ * ferment. .admin-player-wrap n'est plus qu'un espace réservé, dont le
+ * rectangle sert de repère à RemoteControl._positionAdminPlayer() pour
+ * superposer le vrai lecteur exactement par-dessus. Fermé, il est réduit à
+ * 2x2px dans un coin, quasi invisible mais jamais "hidden" — cf. commentaire
+ * en tête de scripts/admin-player.js.
+ */
+.admin-player {
+  position: fixed;
+  z-index: 600;
+  background: #000;
+  border-radius: 6px;
+  overflow: hidden;
+  bottom: 0;
+  right: 0;
+  width: 2px;
+  height: 2px;
+  opacity: 0.01;
+  pointer-events: none;
+  border: none;
+}
+.admin-player iframe {
   width: 100%;
   height: 100%;
+  display: block;
+}
+
+.minigame-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  background: rgba(10, 6, 3, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7em;
+  color: var(--cream, #fff8ec);
+  font-family: "VT323", monospace;
+  text-align: center;
+  padding: 1em;
+}
+.minigame-overlay[hidden] {
+  display: none;
+}
+.minigame-overlay__hint {
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+}
+.minigame-overlay__mount {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5em;
+  width: 100%;
+}
+.minigame-status {
+  font-size: 1.15rem;
+  min-height: 1.4em;
+}
+
+.ttt-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  width: min(60vw, 220px);
+  aspect-ratio: 1;
+}
+.ttt-cell {
+  background: var(--cream, #fff8ec);
+  color: var(--ink, #2a1c12);
+  border: 2px solid var(--wood-dark, #4a2e18);
+  border-radius: 4px;
+  font-size: 1.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ttt-cell:disabled {
+  cursor: default;
+}
+
+.c4-board {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  width: min(80vw, 260px);
+  background: #1e4fa3;
+  padding: 4px;
+  border-radius: 6px;
+}
+.c4-col {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 3px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+.c4-cell {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #0b2c66;
+}
+.c4-cell--player {
+  background: #ffce4a;
+}
+.c4-cell--ai {
+  background: #e2453f;
+}
+
+.pong-canvas {
+  width: min(80vw, 300px);
+  height: min(48vw, 180px);
+  background: #08130c;
+  border: 2px solid var(--wood-dark, #4a2e18);
+  border-radius: 4px;
+  touch-action: none;
 }
 
 .guide-row {
