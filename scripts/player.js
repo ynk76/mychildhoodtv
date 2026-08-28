@@ -68,11 +68,7 @@ class TVPlayer {
         onReady: (e) => {
           this.ready = true;
           e.target.setVolume(this.initialVolume);
-          try {
-            e.target.setOption("captions", "reload", false);
-          } catch (err) {
-            /* pas grave si indisponible */
-          }
+          this._disableCaptions();
           if (this._pending) {
             const pending = this._pending;
             this._pending = null;
@@ -82,6 +78,12 @@ class TVPlayer {
           if (typeof this.onReadyCallback === "function") this.onReadyCallback(e);
         },
         onStateChange: (e) => {
+          // YouTube réactive parfois les sous-titres tout seul au chargement
+          // d'une nouvelle vidéo de la playlist (ex: la vidéo suivante a un
+          // "cc_load_policy" différent, ou le compte YouTube de l'utilisateur
+          // a une préférence sous-titres enregistrée) : on les redésactive à
+          // chaque nouvelle lecture, pas seulement au tout premier chargement.
+          if (e.data === YT.PlayerState.PLAYING) this._disableCaptions();
           if (this._pendingRandomJump) {
             const ids = this.getPlaylistIds();
             // On attend que la playlist soit vraiment chargée (les tout premiers
@@ -106,6 +108,21 @@ class TVPlayer {
         },
       },
     });
+  }
+
+  /** Coupe les sous-titres YouTube (voir onReady/onStateChange ci-dessus). */
+  _disableCaptions() {
+    if (!this.player) return;
+    try {
+      this.player.setOption("captions", "track", {});
+    } catch (err) {
+      /* pas grave si indisponible */
+    }
+    try {
+      this.player.unloadModule("captions");
+    } catch (err) {
+      /* pas grave si indisponible */
+    }
   }
 
   playChannel(channel) {

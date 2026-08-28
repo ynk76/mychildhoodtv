@@ -85,35 +85,35 @@ button {
 /* ---------------------------------------------------------------------- */
 
 [data-scene="salon"] {
-  --wall: #ecdac6;
-  --wall2: #e0c8b1;
-  --motif: #d8bda2;
+  --wall: #f2dcb8;
+  --wall2: #e6c9a0;
+  --motif: #dcb992;
   --rail: #cdae94;
-  --floor: #c69b78;
-  --floor2: #b3866a;
+  --floor: #cf9a6a;
+  --floor2: #b8805c;
   --sky1: #a3c6d1;
   --sky2: #e2e9dc;
-  --frame: #e7d6c2;
-  --frame2: #cbb49c;
+  --frame: #ecd3ab;
+  --frame2: #d1ab86;
   --curtain: #dba99b;
   --curtain2: #c58f85;
   --sofa: #bb9098;
   --sofa2: #a67b84;
-  --cush1: #e8cca9;
+  --cush1: #edc696;
   --cush2: #93a89b;
-  --wood: #a87d5f;
-  --wood2: #87614a;
-  --woodTop: #b98d6c;
-  --tvb: #dcc5a6;
-  --tvb2: #c0a887;
-  --tvb3: #a68e70;
+  --wood: #ac7852;
+  --wood2: #8c5c3f;
+  --woodTop: #bf875d;
+  --tvb: #e0bd94;
+  --tvb2: #c6a179;
+  --tvb3: #ab8663;
   --screen: #2b2b38;
   --metal: #d9cbb6;
-  --rug: #cb9481;
-  --rugband: #ecd7bc;
+  --rug: #d38f6c;
+  --rugband: #f0d3a8;
   --ink: #4d3b38;
   --soft: #7b6360;
-  --paper: #f6ecdc;
+  --paper: #faecce;
   --amb: rgba(255, 196, 120, 0.1);
   --glow: rgba(255, 205, 140, 0);
   --sun: 1;
@@ -140,12 +140,12 @@ button {
   --sofa2: #4a4060;
   --cush1: #b0917f;
   --cush2: #6d857f;
-  --wood: #513f49;
-  --wood2: #3e303a;
-  --woodTop: #5c4852;
-  --tvb: #93837c;
-  --tvb2: #75655f;
-  --tvb3: #5d4f4b;
+  --wood: #4e3c3f;
+  --wood2: #3b2c2e;
+  --woodTop: #59433f;
+  --tvb: #94806f;
+  --tvb2: #765f4f;
+  --tvb3: #5d4a3d;
   --screen: #1b1b26;
   --metal: #8e8275;
   --rug: #7d5b60;
@@ -1097,20 +1097,30 @@ button {
   height: 470px;
   z-index: 5;
 }
-.tv-set__frame {
+/* .tv-set = la télé elle-même (cadre + écran + panneau), séparée du meuble
+   (pieds/socle/niches ci-dessous) pour pouvoir l'agrandir SEULE en mode
+   cinéma sans le meuble — voir la mise à l'échelle du stage dans
+   scripts/main.js et les règles .room.cinema-mode plus bas. Tous ses
+   enfants sont positionnés relativement à SA propre boîte (0,0), pas à
+   .tv-unit. */
+.tv-set {
   position: absolute;
   left: 8px;
   top: 44px;
   width: 380px;
   height: 242px;
+}
+.tv-set__frame {
+  position: absolute;
+  inset: 0;
   border-radius: 26px;
   background: linear-gradient(160deg, var(--tvb), var(--tvb2) 70%, var(--tvb3));
   box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22), inset 0 2px 0 rgba(255, 255, 255, 0.35);
 }
 .tv-set__frame-inner {
   position: absolute;
-  left: 22px;
-  top: 56px;
+  left: 14px;
+  top: 12px;
   width: 352px;
   height: 218px;
   border-radius: 20px;
@@ -1119,8 +1129,8 @@ button {
 }
 .tv-screen {
   position: absolute;
-  left: 38px;
-  top: 70px;
+  left: 30px;
+  top: 26px;
   width: 262px;
   height: 190px;
   border-radius: 14px;
@@ -1150,8 +1160,8 @@ button {
 }
 .tv-set__panel {
   position: absolute;
-  left: 312px;
-  top: 70px;
+  left: 304px;
+  top: 26px;
   width: 52px;
   height: 190px;
   border-radius: 12px;
@@ -1179,6 +1189,8 @@ button {
   place-items: center;
   cursor: pointer;
   font-size: 14px;
+  line-height: 1;
+  padding: 0;
   color: var(--tvb3);
   background: radial-gradient(circle at 40% 35%, var(--metal), var(--tvb3));
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25), inset 0 0 0 2px rgba(0, 0, 0, 0.07);
@@ -1297,12 +1309,14 @@ button {
   background: rgba(0, 0, 0, 0.18);
 }
 
-/* Bouton "revenir à l'écran normal" du mode cinéma : masqué par défaut. */
+/* Bouton "revenir à l'écran normal" du mode cinéma : masqué par défaut,
+   posé dans le coin de .tv-set (donc toujours à l'intérieur de l'écran
+   agrandi, jamais hors-champ, qu'on soit en zoom desktop ou pivoté mobile). */
 .cinema-exit-btn {
   display: none;
   position: absolute;
-  left: 356px;
-  top: -34px;
+  right: 10px;
+  top: 10px;
   align-items: center;
   justify-content: center;
   width: 30px;
@@ -1312,10 +1326,60 @@ button {
   color: #fff8ec;
   border: none;
   font-size: 0.9rem;
+  line-height: 1;
+  padding: 0;
   z-index: 20;
 }
 .room.cinema-mode .cinema-exit-btn {
   display: flex;
+}
+
+/* ---------------------------------------------------------------------- */
+/* MODE CINÉMA : agrandir SEULEMENT la télé (.tv-set), sans le meuble       */
+/* ---------------------------------------------------------------------- */
+
+.room.cinema-mode .tv-legs__foot,
+.room.cinema-mode .tv-stand__top,
+.room.cinema-mode .tv-stand,
+.room.cinema-mode .tv-stand__shadow,
+.room.cinema-mode .tv-set__panel {
+  display: none;
+}
+/* Cadre + écran passent en % pour rester bien proportionnés quelle que
+   soit la taille (zoom desktop) ou la forme (pivotée mobile, voir
+   .tv-set--rotated) que .tv-set prend en mode cinéma. */
+.room.cinema-mode .tv-set__frame {
+  border-radius: 4%;
+}
+.room.cinema-mode .tv-set__frame-inner {
+  display: none;
+}
+.room.cinema-mode .tv-screen {
+  position: absolute;
+  inset: 4.5%;
+  left: 4.5%;
+  top: 4.5%;
+  width: 91%;
+  height: 91%;
+  border-radius: 3%;
+}
+
+/* Mode cinéma mobile : la télé pivote de 90° pour s'afficher en grand
+   format paysage, à regarder en tournant le téléphone à l'horizontale.
+   .tv-set--rotated échappe au transform de .stage (voir initStageScale()
+   dans scripts/main.js, qui neutralise ce transform tant que ce mode est
+   actif) pour se positionner en fixed par rapport au VRAI viewport — sa
+   largeur/hauteur (inversées, puisqu'on pivote) sont calculées et posées
+   en style inline par JS selon la taille d'écran réelle. */
+.tv-set--rotated {
+  /* !important partout : la règle mobile @media (plus bas dans le fichier)
+     fixe .tv-set en left/top px avec la même spécificité — sans ça, elle
+     gagnerait sur l'ordre du fichier et cassait le centrage ci-dessous. */
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  z-index: 1000;
+  transform-origin: center center;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1328,6 +1392,11 @@ button {
   top: 330px;
   width: 150px;
   height: 290px;
+  /* Sur mobile, la table de chevet chevauche la zone du meuble télé (voir
+     RESPONSIVE) : un z-index explicite au-dessus de .tv-unit (5) évite
+     qu'elle (et la lampe cliquable qu'elle porte) ne soit invisible /
+     inaccessible sous la télé. */
+  z-index: 7;
 }
 .bedside-lamp {
   position: absolute;
@@ -1434,6 +1503,15 @@ button {
   border-radius: 3px;
   background: var(--metal);
 }
+.side-table__shadow {
+  position: absolute;
+  left: -6px;
+  top: 240px;
+  width: 162px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.16);
+}
 
 .media-console {
   position: absolute;
@@ -1459,6 +1537,17 @@ button {
   height: 150px;
   border-radius: 4px 4px 8px 8px;
   background: linear-gradient(180deg, var(--wood), var(--wood2));
+}
+/* Le tiroir dans lequel le magnétoscope (.vcr, posé juste au-dessus) a
+   l'air de glisser : un simple renfoncement sombre sur la façade. */
+.media-console__drawer {
+  position: absolute;
+  left: 24px;
+  top: 44px;
+  width: 150px;
+  height: 52px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.12);
 }
 .vcr {
   position: absolute;
@@ -1539,13 +1628,7 @@ button {
 .room-cat__body,
 .room-cat__head,
 .room-cat__ears {
-  fill: #2f2a3c;
-}
-.room-cat__head {
-  fill: #332e42;
-}
-.room-cat__ears {
-  fill: #332e42;
+  fill: #17151c;
 }
 .room-cat__asleep .room-cat__body {
   transform-origin: center bottom;
@@ -1604,10 +1687,17 @@ button {
 .remote__led.on {
   background: #d9705e;
 }
-.remote__row {
+/* .remote__controls est le rang unique de boutons sur desktop (les deux
+   .remote__row sont display:contents, donc "transparents" pour le flex) ;
+   sur mobile (voir RESPONSIVE), .remote__row redevient un vrai rang, pour
+   obtenir deux rangées de 3 touches — voir la maquette mobile. */
+.remote__controls {
   display: flex;
   gap: 9px;
   align-items: center;
+}
+.remote__row {
+  display: contents;
 }
 .remote-btn {
   width: 40px;
@@ -1617,22 +1707,38 @@ button {
   place-items: center;
   cursor: pointer;
   font: 700 18px "Baloo 2", sans-serif;
+  line-height: 1;
+  padding: 0;
   color: var(--ink);
   background: linear-gradient(180deg, var(--paper), var(--cush1));
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
   border: none;
-  transition: transform 0.12s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease, filter 0.12s ease;
 }
 .remote-btn:hover {
   transform: translateY(-2px);
 }
 .remote-btn:active {
   transform: translateY(3px);
+  filter: brightness(0.94);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
 }
 .remote-btn:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
+}
+@keyframes remote-btn-flash {
+  0% {
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18), 0 0 0 0 rgba(255, 216, 150, 0.7);
+  }
+  100% {
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18), 0 0 0 10px rgba(255, 216, 150, 0);
+  }
+}
+.remote-btn--flash {
+  animation: remote-btn-flash 0.35s ease-out;
 }
 .remote-btn--power {
   width: 44px;
@@ -1671,6 +1777,8 @@ button {
   place-items: center;
   cursor: pointer;
   font-size: 24px;
+  line-height: 1;
+  padding: 0;
   background: linear-gradient(160deg, var(--cush1), var(--curtain));
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.26), inset 0 0 0 3px rgba(255, 255, 255, 0.25);
   border: none;
@@ -1958,7 +2066,11 @@ button {
   right: 26px;
   top: 104px;
   z-index: 201;
-  width: min(90vw, 250px);
+  width: 250px;
+  max-width: calc(100vw - 20px);
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  box-sizing: border-box;
   background: var(--cream);
   color: var(--ink);
   border-radius: 18px;
@@ -1999,14 +2111,23 @@ button {
 .chat-form__row {
   display: flex;
   gap: 0.4em;
+  min-width: 0;
 }
 .chat-form__row input {
   flex: 1;
+  min-width: 0;
   font-family: var(--font-body);
   font-size: 1.1rem;
   padding: 0.4em;
   border: 2px solid var(--wood-mid);
   border-radius: 8px;
+}
+.chat-form__row .btn-primary {
+  flex: none;
+  width: auto;
+  padding: 0.5em 0.8em;
+  font-size: 0.95rem;
+  white-space: nowrap;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -2229,28 +2350,28 @@ button {
     width: 358px;
     height: 400px;
   }
-  .tv-set__frame {
+  .tv-set {
     left: 8px;
     top: 14px;
     width: 342px;
     height: 236px;
   }
   .tv-set__frame-inner {
-    left: 20px;
-    top: 24px;
+    left: 12px;
+    top: 10px;
     width: 318px;
     height: 216px;
   }
   .tv-screen {
-    left: 32px;
-    top: 34px;
+    left: 24px;
+    top: 20px;
     width: 262px;
     height: 196px;
     border-radius: 13px;
   }
   .tv-set__panel {
-    left: 300px;
-    top: 34px;
+    left: 292px;
+    top: 20px;
     width: 46px;
     height: 196px;
   }
@@ -2335,12 +2456,6 @@ button {
     top: 380px;
     width: 318px;
   }
-  .cinema-exit-btn {
-    left: auto;
-    right: 8px;
-    top: -34px;
-  }
-
   /* --- Horloge (dans la niche magnéto) + guide TV (dans la niche droite) --- */
   .vcr__clock {
     left: 151px;
@@ -2429,6 +2544,11 @@ button {
   .side-table__body::after {
     display: none;
   }
+  .side-table__shadow {
+    left: -4px;
+    top: 160px;
+    width: 112px;
+  }
 
   /* --- Télécommande pleine largeur, touches ≥ 50px --- */
   .remote {
@@ -2437,13 +2557,25 @@ button {
     width: 358px;
     height: 168px;
     border-radius: 26px;
-    flex-wrap: wrap;
+    gap: 11px;
+  }
+  .remote__title {
+    font-size: 10px;
+  }
+  /* Deux vraies rangées de 3 touches (comme la maquette mobile), au lieu
+     du rang unique desktop : .remote__controls empile les 2 .remote__row,
+     qui redeviennent de vrais conteneurs flex (display:contents annulé). */
+  .remote__controls {
+    flex-direction: column;
+    gap: 11px;
   }
   .remote__row {
-    flex-wrap: wrap;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
   }
   .remote-btn {
-    height: 56px;
     border-radius: 16px;
     font-size: 26px;
   }
@@ -2452,9 +2584,9 @@ button {
     height: 56px;
     font-size: 21px;
   }
-  #btn-vol-down,
-  #btn-vol-up {
+  .remote-btn--vol {
     flex: 1;
+    height: 56px;
   }
   #btn-mute,
   #btn-fullscreen {
@@ -2483,5 +2615,11 @@ button {
     border-radius: 20px 20px 6px 20px;
     font-size: 23px;
     z-index: 3;
+  }
+  .chat-panel {
+    right: 10px;
+    left: 10px;
+    top: 78px;
+    width: auto;
   }
 }

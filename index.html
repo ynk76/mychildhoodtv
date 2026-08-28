@@ -139,30 +139,37 @@
         rapport à .tv-unit), comme dans la maquette — pas d'imbrication.
       -->
       <div class="tv-unit">
-        <div class="tv-set__frame" aria-hidden="true"></div>
-        <div class="tv-set__frame-inner" aria-hidden="true"></div>
-        <div id="tv-screen" class="tv-screen">
-          <div id="player" class="tv-player"></div>
-          <canvas id="screensaver-canvas" class="screensaver-canvas"></canvas>
-          <div id="screensaver-overlay" class="screensaver-overlay" hidden aria-hidden="true"></div>
-          <div id="static-overlay" class="static-overlay" hidden aria-hidden="true"></div>
-          <div id="channel-banner" class="channel-banner">
-            <span class="channel-banner__live">🔴 EN DIRECT</span>
-            <span id="channel-banner-name" class="channel-banner__name"></span>
+        <!-- .tv-set = la télé elle-même (cadre + écran + panneau de
+             commande). Séparée du meuble (pieds/socle/niches) pour pouvoir
+             l'agrandir SEULE en mode cinéma (voir styles/main.css et
+             scripts/main.js, initStageScale()). -->
+        <div class="tv-set" id="tv-set">
+          <div class="tv-set__frame" aria-hidden="true"></div>
+          <div class="tv-set__frame-inner" aria-hidden="true"></div>
+          <div id="tv-screen" class="tv-screen">
+            <div id="player" class="tv-player"></div>
+            <canvas id="screensaver-canvas" class="screensaver-canvas"></canvas>
+            <div id="screensaver-overlay" class="screensaver-overlay" hidden aria-hidden="true"></div>
+            <div id="static-overlay" class="static-overlay" hidden aria-hidden="true"></div>
+            <div id="channel-banner" class="channel-banner">
+              <span class="channel-banner__live">🔴 EN DIRECT</span>
+              <span id="channel-banner-name" class="channel-banner__name"></span>
+            </div>
+            <div id="power-off-overlay" class="power-off-overlay" hidden aria-hidden="true">
+              <div class="power-off-overlay__scan"></div>
+            </div>
+            <div id="minigame-overlay" class="minigame-overlay" hidden>
+              <p class="minigame-overlay__hint">📺 Pub en cours — petite pause jeu !</p>
+              <div id="minigame-mount" class="minigame-overlay__mount"></div>
+            </div>
           </div>
-          <div id="power-off-overlay" class="power-off-overlay" hidden aria-hidden="true">
-            <div class="power-off-overlay__scan"></div>
+          <div class="tv-set__panel" aria-hidden="true">
+            <div class="tv-set__knob"></div>
+            <button id="settings-toggle" class="tv-settings-btn" aria-label="Réglages (protégés par mot de passe)">⚙</button>
+            <div class="tv-set__vents"></div>
+            <div class="tv-set__led"></div>
           </div>
-          <div id="minigame-overlay" class="minigame-overlay" hidden>
-            <p class="minigame-overlay__hint">📺 Pub en cours — petite pause jeu !</p>
-            <div id="minigame-mount" class="minigame-overlay__mount"></div>
-          </div>
-        </div>
-        <div class="tv-set__panel" aria-hidden="true">
-          <div class="tv-set__knob"></div>
-          <button id="settings-toggle" class="tv-settings-btn" aria-label="Réglages (protégés par mot de passe)">⚙</button>
-          <div class="tv-set__vents"></div>
-          <div class="tv-set__led"></div>
+          <button id="cinema-exit" class="cinema-exit-btn" aria-label="Revenir à l'écran normal">✕</button>
         </div>
         <span class="tv-legs__foot tv-legs__foot--l" aria-hidden="true"></span>
         <span class="tv-legs__foot tv-legs__foot--r" aria-hidden="true"></span>
@@ -177,7 +184,6 @@
           </div>
         </div>
         <div class="tv-stand__shadow" aria-hidden="true"></div>
-        <button id="cinema-exit" class="cinema-exit-btn" aria-label="Revenir à l'écran normal">✕</button>
       </div>
 
       <!-- Horloge et guide TV : posés à des coordonnées absolues précises
@@ -198,6 +204,7 @@
       <div class="media-console" aria-hidden="true">
         <div class="media-console__top"></div>
         <div class="media-console__body"></div>
+        <div class="media-console__drawer"></div>
         <div class="vcr">
           <div class="vcr__slot"></div>
           <div class="vcr__buttons"><span></span><span></span><span></span></div>
@@ -236,6 +243,7 @@
         </button>
         <div class="side-table__top"></div>
         <div class="side-table__body"></div>
+        <div class="side-table__shadow"></div>
       </div>
 
       <section id="remote-control" class="remote" role="group" aria-label="Télécommande">
@@ -248,13 +256,17 @@
             <span class="remote__led" data-vol="4"></span>
           </div>
         </div>
-        <div class="remote__row">
-          <button id="btn-power" class="remote-btn remote-btn--power" aria-label="Marche / Arrêt" aria-pressed="true">⏻</button>
-          <button id="btn-vol-down" class="remote-btn" aria-label="Baisser le volume">−</button>
-          <button id="btn-vol-up" class="remote-btn" aria-label="Augmenter le volume">+</button>
-          <button id="btn-mute" class="remote-btn" aria-label="Couper le son" aria-pressed="false">🔇</button>
-          <button id="btn-fullscreen" class="remote-btn" aria-label="Plein écran cinéma">⛶</button>
-          <button id="ambient-mute" class="remote-btn remote-btn--ambient" aria-pressed="false">AMB ♪</button>
+        <div class="remote__controls">
+          <div class="remote__row remote__row--main">
+            <button id="btn-power" class="remote-btn remote-btn--power" aria-label="Marche / Arrêt" aria-pressed="true">⏻</button>
+            <button id="btn-vol-down" class="remote-btn remote-btn--vol" aria-label="Baisser le volume">−</button>
+            <button id="btn-vol-up" class="remote-btn remote-btn--vol" aria-label="Augmenter le volume">+</button>
+          </div>
+          <div class="remote__row remote__row--aux">
+            <button id="btn-mute" class="remote-btn" aria-label="Couper le son" aria-pressed="false">🔇</button>
+            <button id="btn-fullscreen" class="remote-btn" aria-label="Plein écran cinéma">⛶</button>
+            <button id="ambient-mute" class="remote-btn remote-btn--ambient" aria-pressed="false">AMB ♪</button>
+          </div>
         </div>
       </section>
 

@@ -165,11 +165,32 @@ class RemoteControl {
     return this.channels[this.currentIndex];
   }
 
+  /**
+   * Retour visuel immédiat, indépendant de l'état ":active" (qui exige de
+   * garder le doigt/la souris appuyée) : avec seulement 4 LEDs de volume,
+   * beaucoup de clics ne font pas franchir de palier visible (ex. 60→70%),
+   * ce qui pouvait donner l'impression qu'"il faut appuyer plusieurs fois"
+   * pour que ça marche. Ce flash confirme chaque clic, quel que soit l'état
+   * du volume avant/après.
+   */
+  _flashButton(el) {
+    if (!el) return;
+    el.classList.remove("remote-btn--flash");
+    void el.offsetWidth; // force le redémarrage de l'animation si déjà en cours
+    el.classList.add("remote-btn--flash");
+  }
+
   _bindButtons() {
     const d = this.dom;
     d.power.addEventListener("click", () => this.togglePower());
-    d.volUp.addEventListener("click", () => this.changeVolume(10));
-    d.volDown.addEventListener("click", () => this.changeVolume(-10));
+    d.volUp.addEventListener("click", () => {
+      this._flashButton(d.volUp);
+      this.changeVolume(10);
+    });
+    d.volDown.addEventListener("click", () => {
+      this._flashButton(d.volDown);
+      this.changeVolume(-10);
+    });
     d.mute.addEventListener("click", () => this.toggleMute());
     d.fullscreen.addEventListener("click", () => {
       Audio2000.remoteClick();
@@ -301,6 +322,19 @@ class RemoteControl {
     window.addEventListener("resize", () => {
       if (!d.settingsModal.hidden && !d.settingsBody.hidden) this._positionAdminPlayer();
     });
+    // Le panneau de réglages défile (liste de chaînes) : sans ce listener,
+    // le lecteur studio (positionné "à la main" par-dessus son emplacement
+    // réservé, voir _positionAdminPlayer) restait figé à son ancienne
+    // position pendant que le contenu défilait sous lui.
+    if (d.settingsPanel) {
+      d.settingsPanel.addEventListener(
+        "scroll",
+        () => {
+          if (!d.settingsModal.hidden && !d.settingsBody.hidden) this._positionAdminPlayer();
+        },
+        { passive: true }
+      );
+    }
 
     d.settingsAuthForm.addEventListener("submit", (e) => {
       e.preventDefault();
