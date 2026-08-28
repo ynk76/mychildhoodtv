@@ -226,25 +226,26 @@ button {
 }
 .weather-star {
   position: absolute;
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
   background: #fff;
   border-radius: 50%;
+  box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.8);
   display: none;
 }
-.weather-star--1 {
+.star--1 {
   top: 15%;
   left: 15%;
 }
-.weather-star--2 {
+.star--2 {
   top: 30%;
   left: 60%;
 }
-.weather-star--3 {
+.star--3 {
   top: 55%;
   left: 25%;
 }
-.weather-star--4 {
+.star--4 {
   top: 65%;
   left: 75%;
 }
@@ -260,13 +261,13 @@ button {
   display: block;
   animation: twinkle 9s ease-in-out infinite alternate;
 }
-.room--night .weather-star--2 {
+.room--night .star--2 {
   animation-delay: 2.2s;
 }
-.room--night .weather-star--3 {
+.room--night .star--3 {
   animation-delay: 4.4s;
 }
-.room--night .weather-star--4 {
+.room--night .star--4 {
   animation-delay: 6.6s;
 }
 @keyframes twinkle {

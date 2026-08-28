@@ -260,6 +260,10 @@ class RemoteControl {
       this.liveSchedule.resumeLive();
       this._renderLiveStatus();
     });
+    d.adminSkipAd.addEventListener("click", () => {
+      Audio2000.remoteClick();
+      this.liveSchedule.reloadCurrent();
+    });
   }
 
   _openSettings() {

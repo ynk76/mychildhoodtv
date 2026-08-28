@@ -96,6 +96,7 @@ function initApp() {
     adminPause: document.getElementById("btn-admin-pause"),
     adminNext: document.getElementById("btn-admin-next"),
     adminLive: document.getElementById("btn-admin-live"),
+    adminSkipAd: document.getElementById("btn-admin-skip-ad"),
     liveStatus: document.getElementById("settings-live-status"),
     guideOverlay: document.getElementById("guide-overlay"),
     guideNow: document.getElementById("guide-now"),

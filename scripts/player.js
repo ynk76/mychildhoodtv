@@ -14,6 +14,7 @@ class TVPlayer {
     this.initialVolume = initialVolume;
     this.onReadyCallback = onReady;
     this.onStateChangeCallback = onStateChange;
+    this.onEndedCallback = null; // assignable après coup (voir schedule.js)
     this.player = null;
     this.ready = false;
     this._pendingChannel = null;
@@ -46,6 +47,12 @@ class TVPlayer {
       height: "100%",
       playerVars: {
         autoplay: 1,
+        // Toujours démarrer coupé : les navigateurs bloquent l'autoplay avec
+        // le son sauf si la vidéo est muette au départ. On réapplique l'état
+        // sonore réellement voulu juste après (voir onReady -> _applyVolumeState
+        // côté RemoteControl), ce qui, lui, est autorisé car déclenché par le
+        // code de la page suite au clic de démarrage de l'utilisateur.
+        mute: 1,
         controls: 0,
         disablekb: 1,
         fs: 0,
@@ -66,6 +73,9 @@ class TVPlayer {
           if (typeof this.onReadyCallback === "function") this.onReadyCallback(e);
         },
         onStateChange: (e) => {
+          if (e.data === YT.PlayerState.ENDED && typeof this.onEndedCallback === "function") {
+            this.onEndedCallback();
+          }
           if (typeof this.onStateChangeCallback === "function") this.onStateChangeCallback(e);
         },
         onError: () => {
