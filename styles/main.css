@@ -125,7 +125,8 @@ button {
 .window__cross {
   position: absolute;
   background: var(--wood-dark);
-  z-index: 1;
+  /* pas de z-index : doit rester DERRIÈRE les rideaux (qui viennent après
+     dans le DOM), sinon la croix de la fenêtre passe au-dessus */
 }
 .window__cross--v {
   left: 50%;
@@ -147,6 +148,133 @@ button {
   box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.2);
   pointer-events: none;
 }
+
+/* Météo derrière la fenêtre */
+.weather-sun {
+  position: absolute;
+  top: 14%;
+  right: 12%;
+  width: 34%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff59d, #ffca28);
+  box-shadow: 0 0 16px 6px rgba(255, 202, 40, 0.6);
+  display: none;
+}
+.window[data-weather="sunny"] .weather-sun {
+  display: block;
+}
+.weather-cloud {
+  position: absolute;
+  width: 46%;
+  height: 26%;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 22% 10% 0 -4% #fff, -18% 6% 0 2% #fff;
+  opacity: 0.95;
+  display: none;
+}
+.weather-cloud--1 {
+  top: 12%;
+  left: 6%;
+}
+.weather-cloud--2 {
+  top: 40%;
+  left: 42%;
+  width: 36%;
+  height: 20%;
+}
+.window[data-weather="cloudy"] .weather-cloud,
+.window[data-weather="rainy"] .weather-cloud {
+  display: block;
+}
+.weather-rain {
+  position: absolute;
+  inset: 0;
+  display: none;
+  background-image: repeating-linear-gradient(
+    100deg,
+    transparent 0,
+    transparent 10px,
+    rgba(255, 255, 255, 0.55) 10px,
+    rgba(255, 255, 255, 0.55) 12px
+  );
+  background-size: 20px 20px;
+  animation: rain-fall 0.35s linear infinite;
+}
+.window[data-weather="rainy"] .weather-rain {
+  display: block;
+}
+@keyframes rain-fall {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -10px 20px;
+  }
+}
+.weather-moon {
+  position: absolute;
+  top: 14%;
+  right: 14%;
+  width: 26%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #fdf6d8;
+  box-shadow: 0 0 14px 4px rgba(253, 246, 216, 0.5);
+  display: none;
+}
+.weather-star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #fff;
+  border-radius: 50%;
+  display: none;
+}
+.weather-star--1 {
+  top: 15%;
+  left: 15%;
+}
+.weather-star--2 {
+  top: 30%;
+  left: 60%;
+}
+.weather-star--3 {
+  top: 55%;
+  left: 25%;
+}
+.weather-star--4 {
+  top: 65%;
+  left: 75%;
+}
+.room--night .weather-sun,
+.room--night .weather-cloud,
+.room--night .weather-rain {
+  display: none !important;
+}
+.room--night .weather-moon,
+.room--night .weather-star {
+  display: block;
+  animation: twinkle 2.4s ease-in-out infinite alternate;
+}
+.room--night .weather-star--2 {
+  animation-delay: 0.6s;
+}
+.room--night .weather-star--3 {
+  animation-delay: 1.2s;
+}
+.room--night .weather-star--4 {
+  animation-delay: 1.8s;
+}
+@keyframes twinkle {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 1;
+  }
+}
 .curtain {
   position: absolute;
   top: -6%;
@@ -164,24 +292,116 @@ button {
   transform: scaleX(-1);
 }
 
-/* Light switch */
-.light-switch {
+/* Petite étagère + lampe de chevet (bascule jour/nuit) à côté de la télé */
+.side-table {
   position: absolute;
-  top: 4%;
-  left: 4%;
-  z-index: 20;
-  width: 2.4em;
-  height: 2.4em;
-  border-radius: 8px;
-  border: var(--outline);
-  background: var(--cream);
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 3px 3px 0 var(--ink);
+  top: 56%;
+  right: 6%;
+  width: 100px;
+  height: 96px;
+  z-index: 6;
 }
-.light-switch:hover {
+.side-table__top {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: var(--wood-mid);
+  border: var(--outline);
+  border-radius: 3px;
+  box-shadow: 0 5px 0 var(--ink);
+}
+.side-table__leg {
+  position: absolute;
+  bottom: -14px;
+  width: 10px;
+  height: 16px;
+  background: var(--wood-dark);
+  border: 2px solid var(--ink);
+}
+.side-table__leg--l {
+  left: 10px;
+}
+.side-table__leg--r {
+  right: 10px;
+}
+.bedside-lamp {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70px;
+  height: 74px;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.bedside-lamp__glow {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  width: 110px;
+  height: 110px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--lamp-glow), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+.room--night .bedside-lamp__glow {
+  opacity: 1;
+}
+.bedside-lamp__base {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 30px;
+  height: 8px;
+  transform: translateX(-50%);
+  background: var(--wood-dark);
+  border: var(--outline);
+  border-radius: 4px;
+}
+.bedside-lamp__neck {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  width: 6px;
+  height: 24px;
+  transform: translateX(-50%);
+  background: var(--wood-dark);
+  border: 2px solid var(--ink);
+}
+.bedside-lamp__shade {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  width: 30px;
+  height: 32px;
+  transform: translateX(-50%);
+  background: var(--accent);
+  border: var(--outline);
+  border-radius: 4px 4px 16px 16px / 4px 4px 26px 26px;
+}
+.bedside-lamp__shade::before {
+  content: "";
+  position: absolute;
+  bottom: -3px;
+  left: -6px;
+  right: -6px;
+  height: 10px;
+  background: inherit;
+  border: var(--outline);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+}
+.room--night .bedside-lamp__shade {
+  background: #fff2b8;
+  box-shadow: 0 0 12px 3px rgba(255, 206, 74, 0.7);
+}
+.bedside-lamp:hover .bedside-lamp__shade {
   filter: brightness(1.1);
 }
 
@@ -226,8 +446,14 @@ button {
 .frame__photo {
   position: absolute;
   inset: 10%;
-  background: linear-gradient(135deg, #e8d3a0, #c9a860);
+  background: #fff;
   border: 2px solid var(--ink);
+  overflow: hidden;
+}
+.frame__photo svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .vhs-stack {
@@ -250,6 +476,35 @@ button {
 }
 .vhs--3 {
   border-left-color: #6bc7ff;
+}
+
+/* Programme télé (façon Télé 7 Jours), posé sur l'étagère */
+.tv-guide-item {
+  position: absolute;
+  bottom: 100%;
+  left: 58%;
+  width: 34px;
+  height: 44px;
+  background: var(--burgundy);
+  border: var(--outline);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  transform: rotate(-4deg);
+}
+.tv-guide-item__label {
+  font-family: var(--font-display);
+  font-size: 0.55rem;
+  color: var(--cream);
+}
+.tv-guide-item__line {
+  width: 70%;
+  height: 2px;
+  background: var(--cream);
+  opacity: 0.8;
 }
 
 /* Lava lamp (praised as-is : uniquement l'animation au clic est conservée) */
@@ -578,11 +833,11 @@ button {
 .room-cat {
   position: absolute;
   z-index: 11;
-  font-size: 2rem;
+  font-size: 3.4rem;
   line-height: 1;
   transform: scaleX(-1);
-  transition: top 2.5s ease-in-out, left 2.5s ease-in-out, transform 0.3s ease;
-  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.25));
+  transition: top 5s ease-in-out, left 5s ease-in-out, transform 0.4s ease;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.35));
 }
 .room-cat.cat--walking {
   transform: scaleX(-1) scale(1.05);
@@ -719,6 +974,121 @@ button {
   font-size: 1rem;
 }
 
+.settings-auth-error {
+  color: var(--burgundy);
+  font-weight: bold;
+  margin: 0.4em 0 0;
+}
+
+.settings-admin {
+  background: #fff8e8;
+  border: 2px solid var(--wood-mid);
+  border-radius: 6px;
+  padding: 0.6em;
+  margin-bottom: 0.8em;
+}
+.settings-live-status {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  margin-bottom: 0.5em;
+}
+.settings-admin__buttons {
+  display: flex;
+  gap: 0.4em;
+  flex-wrap: wrap;
+}
+.btn-secondary {
+  flex: 1;
+  min-width: 6em;
+  background: var(--wood-mid);
+  color: var(--cream);
+  border: none;
+  border-radius: 6px;
+  padding: 0.5em;
+  font-size: 0.95rem;
+}
+
+.guide-row {
+  font-size: 1.1rem;
+  margin: 0.6em 0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* TCHAT                                                                   */
+/* ---------------------------------------------------------------------- */
+
+.chat-toggle {
+  position: fixed;
+  bottom: 1.2em;
+  left: 1.2em;
+  z-index: 200;
+  background: linear-gradient(160deg, #4a4744, #2a2827);
+  color: var(--accent);
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  padding: 0.6em 1em;
+  font-size: 1rem;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.chat-panel {
+  position: fixed;
+  bottom: 4.5em;
+  left: 1.2em;
+  z-index: 201;
+  width: min(90vw, 320px);
+  background: var(--cream);
+  color: var(--ink);
+  border: 4px solid var(--wood-dark);
+  border-radius: 10px;
+  padding: 0.9em;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+.chat-panel[hidden] {
+  display: none;
+}
+.chat-messages {
+  height: 220px;
+  overflow-y: auto;
+  background: #fff8e8;
+  border: 2px solid var(--wood-mid);
+  border-radius: 6px;
+  padding: 0.5em;
+  font-size: 1rem;
+}
+.chat-line {
+  margin: 0 0 0.4em;
+  word-break: break-word;
+}
+.chat-line__author {
+  font-weight: bold;
+  color: var(--burgundy);
+}
+.chat-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+.chat-form__nickname {
+  font-size: 0.9rem;
+}
+.chat-form__row {
+  display: flex;
+  gap: 0.4em;
+}
+.chat-form__row input {
+  flex: 1;
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  padding: 0.4em;
+  border: 2px solid var(--wood-mid);
+  border-radius: 4px;
+}
+
 /* ---------------------------------------------------------------------- */
 /* REMOTE CONTROL                                                          */
 /* ---------------------------------------------------------------------- */
@@ -813,7 +1183,7 @@ button {
 @media (max-width: 760px) {
   .wallpaper,
   .window,
-  .light-switch,
+  .side-table,
   .shelf,
   .plant,
   .media-console,

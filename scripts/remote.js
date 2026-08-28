@@ -1,8 +1,15 @@
 /**
- * Télécommande : power, volume, plein écran, et choix de la chaîne
- * (la chaîne par défaut ou une playlist YouTube personnalisée) via le
- * panneau Réglages.
+ * Télécommande : power, volume, plein écran, guide des programmes (public),
+ * et réglages protégés par mot de passe (choix de chaîne + pilotage de la
+ * diffusion en direct).
+ *
+ * NB sécurité : le mot de passe est vérifié côté navigateur, dans du code
+ * public (comme tout site 100% statique sans serveur). N'importe qui peut le
+ * lire dans le code source. C'est un simple verrou "on n'y touche pas sans
+ * le vouloir", pas une vraie protection contre quelqu'un de déterminé.
  */
+
+const SETTINGS_PASSWORD = "Foot2Rue";
 
 /** Essaie d'extraire un ID de playlist YouTube utilisable depuis une URL ou un ID collé. */
 function parsePlaylistInput(raw) {
@@ -25,6 +32,20 @@ function parsePlaylistInput(raw) {
   return value;
 }
 
+/** Récupère le titre d'une vidéo YouTube via oEmbed (public, sans clé API). */
+async function fetchVideoTitle(videoId) {
+  if (!videoId) return "?";
+  try {
+    const url = `https://www.youtube.com/oembed?url=${encodeURIComponent("https://www.youtube.com/watch?v=" + videoId)}&format=json`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("oembed failed");
+    const data = await res.json();
+    return data.title || "Titre indisponible";
+  } catch (e) {
+    return "Titre indisponible";
+  }
+}
+
 class RemoteControl {
   constructor(dom) {
     this.dom = dom;
@@ -39,12 +60,14 @@ class RemoteControl {
       initialVolume: this.volume,
       onReady: () => {
         this._applyVolumeState();
-        if (this.power) this.player.playChannel(this.currentChannel());
+        if (this.power) this.liveSchedule.start(this.currentChannel());
       },
     });
+    this.liveSchedule = new LiveSchedule(this.player);
 
     this._bindButtons();
     this._bindSettings();
+    this._bindGuide();
     this._renderVolume();
     this._updatePowerUI(false);
 
@@ -97,7 +120,8 @@ class RemoteControl {
     Audio2000.remoteClick();
     this._updatePowerUI(true);
     if (this.power) {
-      this.player.playChannel(this.currentChannel());
+      if (this.liveSchedule.live) this.liveSchedule.resumeLive();
+      else this.player.play();
       this._showBanner(this.currentChannel());
     } else {
       this.player.pause();
@@ -134,7 +158,7 @@ class RemoteControl {
     Audio2000.staticBurst(0.4);
     setTimeout(() => {
       staticEl.hidden = true;
-      if (this.power) this.player.playChannel(channel);
+      if (this.power) this.liveSchedule.start(channel);
       this._showBanner(channel);
     }, 400);
   }
@@ -178,14 +202,32 @@ class RemoteControl {
     this.dom.volumeLabel.textContent = this.muted ? "MUET" : `VOL ${this.volume}`;
   }
 
+  /* ---------------------------------------------------------------- */
+  /* Réglages protégés par mot de passe                                 */
+  /* ---------------------------------------------------------------- */
+
   _bindSettings() {
     const d = this.dom;
+
     d.settingsToggle.addEventListener("click", () => {
       Audio2000.hoverBlip();
       d.settingsModal.hidden = !d.settingsModal.hidden;
-      if (!d.settingsModal.hidden) this._renderChannelList();
+      if (!d.settingsModal.hidden) this._openSettings();
     });
     d.settingsClose.addEventListener("click", () => (d.settingsModal.hidden = true));
+
+    d.settingsAuthForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (d.settingsPassword.value === SETTINGS_PASSWORD) {
+        Storage.setSettingsUnlocked(true);
+        d.settingsAuthError.hidden = true;
+        d.settingsPassword.value = "";
+        this._showSettingsBody();
+      } else {
+        d.settingsAuthError.hidden = false;
+        Audio2000.staticBurst(0.2);
+      }
+    });
 
     d.settingsForm.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -198,6 +240,44 @@ class RemoteControl {
       d.settingsForm.reset();
       this._renderChannelList();
     });
+
+    d.adminPause.addEventListener("click", () => {
+      Audio2000.remoteClick();
+      this.liveSchedule.pauseLocal();
+      this._renderLiveStatus();
+    });
+    d.adminNext.addEventListener("click", () => {
+      Audio2000.remoteClick();
+      this.liveSchedule.skipNext();
+      this._renderLiveStatus();
+    });
+    d.adminLive.addEventListener("click", () => {
+      Audio2000.remoteClick();
+      this.liveSchedule.resumeLive();
+      this._renderLiveStatus();
+    });
+  }
+
+  _openSettings() {
+    if (Storage.getSettingsUnlocked()) this._showSettingsBody();
+    else this._showSettingsAuth();
+  }
+
+  _showSettingsAuth() {
+    this.dom.settingsAuth.hidden = false;
+    this.dom.settingsBody.hidden = true;
+    this.dom.settingsAuthError.hidden = true;
+  }
+
+  _showSettingsBody() {
+    this.dom.settingsAuth.hidden = true;
+    this.dom.settingsBody.hidden = false;
+    this._renderChannelList();
+    this._renderLiveStatus();
+  }
+
+  _renderLiveStatus() {
+    this.dom.liveStatus.textContent = this.liveSchedule.live ? "🔴 En direct" : "⏸ En pause (local)";
   }
 
   _renderChannelList() {
@@ -216,6 +296,7 @@ class RemoteControl {
       btn.addEventListener("click", () => {
         this.selectChannel(index);
         this._renderChannelList();
+        this._renderLiveStatus();
       });
       btn.addEventListener("mouseenter", () => Audio2000.hoverBlip());
       li.appendChild(btn);
@@ -231,7 +312,7 @@ class RemoteControl {
           if (this.currentIndex >= this.channels.length) {
             this.currentIndex = 0;
             Storage.setLastChannel(this.currentChannel().number);
-            if (this.power) this.player.playChannel(this.currentChannel());
+            if (this.power) this.liveSchedule.start(this.currentChannel());
           }
           this._renderChannelList();
         });
@@ -240,6 +321,25 @@ class RemoteControl {
 
       list.appendChild(li);
     });
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Guide des programmes (public, lecture seule)                       */
+  /* ---------------------------------------------------------------- */
+
+  _bindGuide() {
+    this.dom.guideClose.addEventListener("click", () => (this.dom.guideOverlay.hidden = true));
+  }
+
+  async openGuide() {
+    Audio2000.hoverBlip();
+    this.dom.guideOverlay.hidden = false;
+    this.dom.guideNow.textContent = "Chargement...";
+    this.dom.guideNext.textContent = "Chargement...";
+    const { nowId, nextId } = this.liveSchedule.getNowAndNextIds();
+    const [nowTitle, nextTitle] = await Promise.all([fetchVideoTitle(nowId), fetchVideoTitle(nextId)]);
+    this.dom.guideNow.textContent = nowTitle;
+    this.dom.guideNext.textContent = nextTitle;
   }
 }
 

@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>My Childhood TV</title>
-<meta name="description" content="Un salon des années 2000 en full-screen, avec une vraie télé YouTube pilotable à la télécommande." />
+<meta name="description" content="Un salon des années 2000 en full-screen, avec une vraie télé YouTube diffusée en direct pour tout le monde en même temps." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
@@ -26,7 +26,17 @@
   <div class="wallpaper" aria-hidden="true"></div>
 
   <div class="window" aria-hidden="true">
-    <div class="window__sky"></div>
+    <div class="window__sky">
+      <div class="weather-sun"></div>
+      <div class="weather-moon"></div>
+      <div class="weather-cloud weather-cloud--1"></div>
+      <div class="weather-cloud weather-cloud--2"></div>
+      <div class="weather-rain"></div>
+      <div class="weather-star star--1"></div>
+      <div class="weather-star star--2"></div>
+      <div class="weather-star star--3"></div>
+      <div class="weather-star star--4"></div>
+    </div>
     <div class="window__cross window__cross--v"></div>
     <div class="window__cross window__cross--h"></div>
     <div class="window__frame"></div>
@@ -34,11 +44,22 @@
     <div class="curtain curtain--right"></div>
   </div>
 
-  <button id="light-switch" class="light-switch" data-blip aria-pressed="false" aria-label="Interrupteur : basculer entre jour et nuit">💡</button>
-
   <div class="shelf shelf--left" aria-hidden="true">
-    <div class="frame frame--1"><div class="frame__photo"></div></div>
-    <div class="frame frame--2"><div class="frame__photo"></div></div>
+    <div class="frame frame--1">
+      <div class="frame__photo">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="#ffd97a"/><circle cx="50" cy="62" r="22" fill="#ff8a3d"/><path d="M0 78 Q25 62 50 78 T100 78 V100 H0 Z" fill="#3fa9a0"/></svg>
+      </div>
+    </div>
+    <div class="frame frame--2">
+      <div class="frame__photo">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="#cdeeff"/><rect x="30" y="55" width="40" height="30" fill="#e2453f"/><path d="M30 55 L50 35 L70 55 Z" fill="#ffce4a"/><rect x="44" y="30" width="6" height="10" fill="#ff8a3d"/><circle cx="20" cy="80" r="6" fill="#ff8a2b"/><circle cx="80" cy="82" r="6" fill="#4a9c3f"/></svg>
+      </div>
+    </div>
+    <div id="tv-guide-item" class="tv-guide-item" data-blip tabindex="0" role="button" aria-label="Programme télé : voir ce qui passe en ce moment et ensuite">
+      <span class="tv-guide-item__label">TV</span>
+      <span class="tv-guide-item__line"></span>
+      <span class="tv-guide-item__line"></span>
+    </div>
     <div class="vhs-stack">
       <div class="vhs vhs--1"></div>
       <div class="vhs vhs--2"></div>
@@ -47,7 +68,11 @@
   </div>
 
   <div class="shelf shelf--right" aria-hidden="true">
-    <div class="frame frame--3"><div class="frame__photo"></div></div>
+    <div class="frame frame--3">
+      <div class="frame__photo">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="#fff6e0"/><circle cx="50" cy="55" r="28" fill="#e0a83f"/><circle cx="40" cy="48" r="4" fill="#2a1c12"/><circle cx="60" cy="48" r="4" fill="#2a1c12"/><path d="M38 65 Q50 75 62 65" stroke="#2a1c12" stroke-width="3" fill="none"/><path d="M50 27 L45 15 M50 27 L55 15" stroke="#2a1c12" stroke-width="3"/></svg>
+      </div>
+    </div>
     <div id="lava-lamp" class="lava-lamp" data-blip tabindex="0" role="button" aria-label="Lampe à lave, cliquer pour l'animer">
       <div class="lava-lamp__glass">
         <div class="lava-lamp__blob b1"></div>
@@ -76,15 +101,28 @@
           <div id="screensaver-overlay" class="screensaver-overlay" hidden aria-hidden="true"></div>
           <div id="static-overlay" class="static-overlay" hidden aria-hidden="true"></div>
           <div id="channel-banner" class="channel-banner">
+            <span class="channel-banner__live">🔴 EN DIRECT</span>
             <span id="channel-banner-name" class="channel-banner__name"></span>
           </div>
           <div id="power-off-overlay" class="power-off-overlay" hidden aria-hidden="true"></div>
         </div>
         <div class="tv-set__brand">MY CHILDHOOD TV</div>
       </div>
-      <button id="settings-toggle" class="tv-settings-btn" data-blip aria-label="Réglages : choisir ou ajouter une chaîne personnalisée">⚙</button>
+      <button id="settings-toggle" class="tv-settings-btn" data-blip aria-label="Réglages (protégés par mot de passe)">⚙</button>
     </div>
     <div class="tv-legs" aria-hidden="true"></div>
+  </div>
+
+  <div class="side-table" aria-hidden="true">
+    <button id="bedside-lamp" class="bedside-lamp" data-blip aria-pressed="false" aria-label="Lampe de chevet : basculer entre jour et nuit">
+      <span class="bedside-lamp__glow"></span>
+      <span class="bedside-lamp__shade"></span>
+      <span class="bedside-lamp__neck"></span>
+      <span class="bedside-lamp__base"></span>
+    </button>
+    <div class="side-table__top"></div>
+    <div class="side-table__leg side-table__leg--l"></div>
+    <div class="side-table__leg side-table__leg--r"></div>
   </div>
 
   <div class="media-console" aria-hidden="true">
@@ -104,9 +142,20 @@
     <div class="sofa__cushion c3"></div>
   </div>
 
-  <div id="room-cat" class="room-cat" data-blip tabindex="0" role="button" aria-label="Chat du salon, cliquer pour le réveiller">🐈</div>
+  <div id="room-cat" class="room-cat" data-blip tabindex="0" role="button" aria-label="Chat du salon, cliquer pour le réveiller">🐈‍⬛</div>
 
 </main>
+
+<div id="guide-overlay" class="settings-modal" hidden>
+  <div class="settings-panel" role="dialog" aria-modal="true" aria-label="Programme télé">
+    <div class="panel-header">
+      <h2>📺 Programme</h2>
+      <button id="guide-close" class="icon-btn" data-blip aria-label="Fermer le programme">✕</button>
+    </div>
+    <p class="guide-row"><strong>🔴 En ce moment</strong><br /><span id="guide-now">Chargement...</span></p>
+    <p class="guide-row"><strong>⏭ Ensuite</strong><br /><span id="guide-next">Chargement...</span></p>
+  </div>
+</div>
 
 <div id="settings-modal" class="settings-modal" hidden>
   <div class="settings-panel" role="dialog" aria-modal="true" aria-label="Réglages de la télévision">
@@ -114,17 +163,40 @@
       <h2>⚙ Réglages</h2>
       <button id="settings-close" class="icon-btn" data-blip aria-label="Fermer les réglages">✕</button>
     </div>
-    <form id="settings-form" class="settings-form">
-      <label>Nom de la chaîne
-        <input id="settings-name" type="text" required maxlength="40" placeholder="Ma chaîne perso" />
-      </label>
-      <label>URL ou ID de playlist YouTube
-        <input id="settings-url" type="text" required placeholder="https://www.youtube.com/playlist?list=..." />
-      </label>
-      <button type="submit" class="btn-primary">Ajouter la chaîne</button>
-    </form>
-    <p class="settings-hint">Astuce : un simple lien de vidéo fonctionne aussi (une playlist "mix" sera générée automatiquement). Clique sur une chaîne ci-dessous pour la regarder.</p>
-    <ul id="settings-list" class="settings-list"></ul>
+
+    <div id="settings-auth">
+      <p class="settings-hint">Accès protégé. Entre le mot de passe pour changer la chaîne ou piloter la diffusion.</p>
+      <form id="settings-auth-form" class="settings-form">
+        <label>Mot de passe
+          <input id="settings-password" type="password" required autocomplete="off" />
+        </label>
+        <button type="submit" class="btn-primary">Déverrouiller</button>
+      </form>
+      <p id="settings-auth-error" class="settings-auth-error" hidden>Mot de passe incorrect.</p>
+    </div>
+
+    <div id="settings-body" hidden>
+      <div class="settings-admin">
+        <span id="settings-live-status" class="settings-live-status">🔴 En direct</span>
+        <div class="settings-admin__buttons">
+          <button id="btn-admin-pause" type="button" class="btn-secondary" data-blip>⏸ Pause</button>
+          <button id="btn-admin-next" type="button" class="btn-secondary" data-blip>⏭ Suivant</button>
+          <button id="btn-admin-live" type="button" class="btn-secondary" data-blip>🔴 Revenir au direct</button>
+        </div>
+      </div>
+
+      <form id="settings-form" class="settings-form">
+        <label>Nom de la chaîne
+          <input id="settings-name" type="text" required maxlength="40" placeholder="Ma chaîne perso" />
+        </label>
+        <label>URL ou ID de playlist YouTube
+          <input id="settings-url" type="text" required placeholder="https://www.youtube.com/playlist?list=..." />
+        </label>
+        <button type="submit" class="btn-primary">Ajouter la chaîne</button>
+      </form>
+      <p class="settings-hint">Astuce : un simple lien de vidéo fonctionne aussi (une playlist "mix" sera générée automatiquement). Clique sur une chaîne ci-dessous pour la regarder.</p>
+      <ul id="settings-list" class="settings-list"></ul>
+    </div>
   </div>
 </div>
 
@@ -146,13 +218,35 @@
   </div>
 </section>
 
+<button id="chat-toggle" class="chat-toggle" data-blip aria-label="Ouvrir le tchat">💬 Tchat</button>
+<div id="chat-panel" class="chat-panel" hidden>
+  <div class="panel-header">
+    <h2>💬 Tchat</h2>
+    <button id="chat-close" class="icon-btn" data-blip aria-label="Fermer le tchat">✕</button>
+  </div>
+  <p id="chat-status" class="settings-hint">Connexion...</p>
+  <div id="chat-messages" class="chat-messages"></div>
+  <form id="chat-form" class="chat-form">
+    <span class="chat-form__nickname">Toi : <strong id="chat-nickname"></strong></span>
+    <div class="chat-form__row">
+      <input id="chat-input" type="text" maxlength="140" placeholder="Écris un message..." autocomplete="off" />
+      <button type="submit" class="btn-primary">Envoyer</button>
+    </div>
+  </form>
+</div>
+
 <script src="scripts/config.js"></script>
 <script src="scripts/storage.js"></script>
 <script src="scripts/audio.js"></script>
 <script src="scripts/player.js"></script>
+<script src="scripts/schedule.js"></script>
 <script src="scripts/decor.js"></script>
 <script src="scripts/screensaver.js"></script>
 <script src="scripts/remote.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="scripts/firebase-config.js"></script>
+<script src="scripts/chat.js"></script>
 <script src="scripts/main.js"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 /**
  * Point d'entrée : séquence de démarrage rétro, puis initialisation de
- * tous les modules (décor, télécommande, écran de veille, plein écran).
+ * tous les modules (décor, télécommande, écran de veille, plein écran, tchat).
  */
 
 function initBoot(onDone) {
@@ -84,13 +84,31 @@ function initApp() {
     settingsToggle: document.getElementById("settings-toggle"),
     settingsModal: document.getElementById("settings-modal"),
     settingsClose: document.getElementById("settings-close"),
+    settingsAuth: document.getElementById("settings-auth"),
+    settingsAuthForm: document.getElementById("settings-auth-form"),
+    settingsPassword: document.getElementById("settings-password"),
+    settingsAuthError: document.getElementById("settings-auth-error"),
+    settingsBody: document.getElementById("settings-body"),
     settingsForm: document.getElementById("settings-form"),
     settingsName: document.getElementById("settings-name"),
     settingsUrl: document.getElementById("settings-url"),
     settingsList: document.getElementById("settings-list"),
+    adminPause: document.getElementById("btn-admin-pause"),
+    adminNext: document.getElementById("btn-admin-next"),
+    adminLive: document.getElementById("btn-admin-live"),
+    liveStatus: document.getElementById("settings-live-status"),
+    guideOverlay: document.getElementById("guide-overlay"),
+    guideNow: document.getElementById("guide-now"),
+    guideNext: document.getElementById("guide-next"),
+    guideClose: document.getElementById("guide-close"),
   });
 
   remote.onFullscreenRequest = toggleCinema;
+
+  const guideItem = document.getElementById("tv-guide-item");
+  if (guideItem) guideItem.addEventListener("click", () => remote.openGuide());
+
+  if (typeof window.initChat === "function") window.initChat();
 
   window.initScreensaver({
     overlayEl: document.getElementById("screensaver-overlay"),

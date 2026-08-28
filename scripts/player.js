@@ -106,6 +106,48 @@ class TVPlayer {
   unmute() {
     if (this.ready) this.player.unMute();
   }
+
+  /** Liste ordonnée des IDs vidéo de la playlist en cours (dispo une fois la playlist chargée). */
+  getPlaylistIds() {
+    if (!this.ready || !this.player || typeof this.player.getPlaylist !== "function") return null;
+    try {
+      return this.player.getPlaylist() || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  playVideoAt(index) {
+    if (!this.ready || !this.player) return;
+    try {
+      this.player.playVideoAt(index);
+    } catch (e) {
+      /* index hors limites : silencieux */
+    }
+  }
+
+  seekTo(seconds) {
+    if (!this.ready || !this.player) return;
+    try {
+      this.player.seekTo(seconds, true);
+    } catch (e) {
+      /* silencieux */
+    }
+  }
+
+  nextVideo() {
+    if (this.ready && this.player) this.player.nextVideo();
+  }
+
+  getVideoTitle() {
+    if (!this.ready || !this.player || typeof this.player.getVideoData !== "function") return "";
+    try {
+      const data = this.player.getVideoData();
+      return (data && data.title) || "";
+    } catch (e) {
+      return "";
+    }
+  }
 }
 
 window.TVPlayer = TVPlayer;

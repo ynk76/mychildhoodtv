@@ -11,6 +11,7 @@ const STORAGE_KEYS = {
   customChannels: "salon2000.customChannels",
   nightMode: "salon2000.nightMode",
   power: "salon2000.power",
+  settingsUnlocked: "salon2000.settingsUnlocked",
 };
 
 function safeGet(key, fallback) {
@@ -67,6 +68,12 @@ const Storage = {
   },
   setPower(isOn) {
     safeSet(STORAGE_KEYS.power, isOn);
+  },
+  getSettingsUnlocked() {
+    return safeGet(STORAGE_KEYS.settingsUnlocked, false);
+  },
+  setSettingsUnlocked(unlocked) {
+    safeSet(STORAGE_KEYS.settingsUnlocked, unlocked);
   },
   getCustomChannels() {
     return safeGet(STORAGE_KEYS.customChannels, []);

@@ -101,6 +101,9 @@
   top: 6%;
   left: 6%;
   z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
   background: rgba(0, 0, 0, 0.55);
   border-left: 4px solid var(--accent);
   padding: 0.3em 0.6em;
@@ -113,6 +116,10 @@
 .channel-banner--visible {
   opacity: 1;
   transform: translateX(0);
+}
+.channel-banner__live {
+  font-size: 0.55rem;
+  color: #ff5b5b;
 }
 .channel-banner__name {
   font-size: 0.65rem;
@@ -169,7 +176,7 @@
 
 .cinema-mode .wallpaper,
 .cinema-mode .window,
-.cinema-mode .light-switch,
+.cinema-mode .side-table,
 .cinema-mode .shelf,
 .cinema-mode .plant,
 .cinema-mode .media-console,

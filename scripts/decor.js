@@ -1,6 +1,7 @@
 /**
  * Interactions du décor (fixe, pas de parallax) : easter eggs cliquables,
- * horloge à l'heure réelle, chat qui se balade, cycle jour/nuit.
+ * horloge à l'heure réelle, chat qui se balade (lentement), lampe de
+ * chevet jour/nuit, météo derrière la fenêtre.
  */
 
 function initHoverSounds(root) {
@@ -42,18 +43,17 @@ function initClock() {
   });
 }
 
-/** Le chat se balade dans le salon et s'allonge à différents endroits. */
+/** Le chat, gros, noir et paresseux : il se balade rarement et lentement. */
 function initWanderingCat() {
   const cat = document.getElementById("room-cat");
   if (!cat) return;
 
   const spots = [
-    { top: "84%", left: "38%" }, // sur le tapis
-    { top: "84%", left: "60%" }, // sur le tapis, côté opposé
-    { top: "70%", left: "22%" }, // au pied du canapé
-    { top: "58%", left: "10%" }, // près de la plante
-    { top: "88%", left: "50%" }, // devant la télé
-    { top: "68%", left: "78%" }, // près du meuble TV
+    { top: "82%", left: "38%" }, // sur le tapis
+    { top: "82%", left: "60%" }, // sur le tapis, côté opposé
+    { top: "68%", left: "22%" }, // au pied du canapé
+    { top: "56%", left: "10%" }, // près de la plante
+    { top: "86%", left: "50%" }, // devant la télé
   ];
   let currentSpot = -1;
   let awake = false;
@@ -69,11 +69,12 @@ function initWanderingCat() {
     cat._arriveTimer = setTimeout(() => {
       cat.classList.remove("cat--walking");
       cat.classList.add("cat--lying");
-    }, 2600);
+    }, 4500);
   }
 
   function scheduleNextMove() {
     clearTimeout(cat._wanderTimer);
+    // paresseux : une seule fois toutes les 45 à 90 secondes
     cat._wanderTimer = setTimeout(() => {
       if (!awake) {
         let next = Math.floor(Math.random() * spots.length);
@@ -81,7 +82,7 @@ function initWanderingCat() {
         moveTo(next);
       }
       scheduleNextMove();
-    }, 9000 + Math.random() * 8000);
+    }, 45000 + Math.random() * 45000);
   }
 
   moveTo(Math.floor(Math.random() * spots.length));
@@ -95,15 +96,13 @@ function initWanderingCat() {
     cat._awakeTimer = setTimeout(() => {
       awake = false;
       cat.classList.remove("cat--awake");
-      let next = Math.floor(Math.random() * spots.length);
-      if (next === currentSpot) next = (next + 1) % spots.length;
-      moveTo(next);
     }, 2500);
   });
 }
 
+/** Lampe de chevet à côté de la télé : cliquer bascule jour/nuit. */
 function initDayNight() {
-  const toggle = document.getElementById("light-switch");
+  const toggle = document.getElementById("bedside-lamp");
   const room = document.getElementById("room");
   if (!toggle || !room) return;
 
@@ -123,10 +122,28 @@ function initDayNight() {
   });
 }
 
+/** Météo derrière la fenêtre : change de temps de temps en temps le jour, étoilé la nuit. */
+function initWeather() {
+  const window_ = document.querySelector(".window");
+  const room = document.getElementById("room");
+  if (!window_ || !room) return;
+
+  const states = ["sunny", "cloudy", "rainy"];
+
+  function pick() {
+    const next = states[Math.floor(Math.random() * states.length)];
+    window_.dataset.weather = next;
+  }
+
+  pick();
+  setInterval(pick, 3 * 60 * 1000 + Math.random() * 90000);
+}
+
 window.initDecor = function initDecor() {
   initHoverSounds(document);
   initLavaLamp();
   initClock();
   initWanderingCat();
   initDayNight();
+  initWeather();
 };
