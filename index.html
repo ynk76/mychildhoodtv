@@ -93,30 +93,32 @@
   </div>
 
   <div class="tv-unit">
-    <div class="tv-set">
-      <div class="tv-set__frame">
-        <div id="tv-screen" class="tv-screen">
-          <div id="player" class="tv-player"></div>
-          <canvas id="screensaver-canvas" class="screensaver-canvas"></canvas>
-          <div id="screensaver-overlay" class="screensaver-overlay" hidden aria-hidden="true"></div>
-          <div id="static-overlay" class="static-overlay" hidden aria-hidden="true"></div>
-          <div id="channel-banner" class="channel-banner">
-            <span class="channel-banner__live">🔴 EN DIRECT</span>
-            <span id="channel-banner-name" class="channel-banner__name"></span>
+    <div class="tv-frame-rotator">
+      <div class="tv-set">
+        <div class="tv-set__frame">
+          <div id="tv-screen" class="tv-screen">
+            <div id="player" class="tv-player"></div>
+            <canvas id="screensaver-canvas" class="screensaver-canvas"></canvas>
+            <div id="screensaver-overlay" class="screensaver-overlay" hidden aria-hidden="true"></div>
+            <div id="static-overlay" class="static-overlay" hidden aria-hidden="true"></div>
+            <div id="channel-banner" class="channel-banner">
+              <span class="channel-banner__live">🔴 EN DIRECT</span>
+              <span id="channel-banner-name" class="channel-banner__name"></span>
+            </div>
+            <div id="power-off-overlay" class="power-off-overlay" hidden aria-hidden="true">
+              <div class="power-off-overlay__scan"></div>
+            </div>
+            <div id="minigame-overlay" class="minigame-overlay" hidden>
+              <p class="minigame-overlay__hint">📺 Pub en cours — petite pause jeu !</p>
+              <div id="minigame-mount" class="minigame-overlay__mount"></div>
+            </div>
           </div>
-          <div id="power-off-overlay" class="power-off-overlay" hidden aria-hidden="true">
-            <div class="power-off-overlay__scan"></div>
-          </div>
-          <div id="minigame-overlay" class="minigame-overlay" hidden>
-            <p class="minigame-overlay__hint">📺 Pub en cours — petite pause jeu !</p>
-            <div id="minigame-mount" class="minigame-overlay__mount"></div>
-          </div>
+          <div class="tv-set__brand">MY CHILDHOOD TV</div>
         </div>
-        <div class="tv-set__brand">MY CHILDHOOD TV</div>
       </div>
-      <button id="settings-toggle" class="tv-settings-btn" aria-label="Réglages (protégés par mot de passe)">⚙</button>
+      <div class="tv-legs" aria-hidden="true"></div>
     </div>
-    <div class="tv-legs" aria-hidden="true"></div>
+    <button id="settings-toggle" class="tv-settings-btn" aria-label="Réglages (protégés par mot de passe)">⚙</button>
   </div>
 
   <div class="side-table" aria-hidden="true">

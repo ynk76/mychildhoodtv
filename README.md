@@ -103,7 +103,7 @@ Chaque visiteur du tchat reçoit un pseudo aléatoire de personnage de dessin an
 - Easter eggs : lampe à lave animable au clic, horloge du magnétoscope à l'heure réelle (glitch amusant au clic), gros chat noir paresseux qui se balade rarement et s'allonge à différents endroits
 - Mode plein écran cinéma (bouton "⛶ Écran" sur la télécommande, ou double-clic sur l'écran ; `Échap` pour sortir)
 - Ambiance sonore synthétisée (crépitement, tic-tac) avec bouton dédié pour la couper
-- Site responsive : sur mobile, la vue se recentre sur la télé et la télécommande
+- Site responsive : sur mobile, la vue se recentre sur la télé et la télécommande. En portrait, la télé pivote et s'affiche en grand format paysage (16:9, façon lecteur vidéo plein écran) pour occuper un maximum de largeur d'écran, même téléphone tenu à la verticale
 
 ## Contraintes techniques respectées
 
