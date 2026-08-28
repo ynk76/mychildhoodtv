@@ -43,11 +43,23 @@ function initAmbientMuteButton() {
   });
 }
 
-/** Mode cinéma plein écran : double-clic sur l'écran, ou bouton dédié sur la télécommande. */
+/**
+ * Mode cinéma plein écran : double-clic sur l'écran, ou bouton dédié sur la
+ * télécommande. Sur mobile en portrait, ce mode masque aussi toutes les
+ * commandes (télécommande, tchat...) et pivote l'écran en grand format
+ * paysage à regarder en tournant le téléphone à l'horizontale — dans ce
+ * cas, seul le bouton "cinema-exit" (à l'intérieur de l'écran, pivote avec
+ * lui) permet de revenir en arrière (voir styles/main.css).
+ */
 function initCinemaMode() {
   const screen = document.getElementById("tv-screen");
   const room = document.getElementById("room");
+  const exitBtn = document.getElementById("cinema-exit");
   if (!screen || !room) return null;
+
+  function disable() {
+    room.classList.remove("cinema-mode");
+  }
 
   function toggle() {
     room.classList.toggle("cinema-mode");
@@ -55,10 +67,9 @@ function initCinemaMode() {
 
   screen.addEventListener("dblclick", toggle);
   window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && room.classList.contains("cinema-mode")) {
-      room.classList.remove("cinema-mode");
-    }
+    if (e.key === "Escape" && room.classList.contains("cinema-mode")) disable();
   });
+  if (exitBtn) exitBtn.addEventListener("click", disable);
 
   return toggle;
 }

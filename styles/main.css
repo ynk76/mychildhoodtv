@@ -726,6 +726,26 @@ button {
   border-radius: 0 0 4px 4px;
 }
 
+/* Bouton "revenir à l'écran normal" : masqué par défaut, affiché seulement
+   dans .cinema-mode sur mobile portrait (voir RESPONSIVE ci-dessous) — c'est
+   la SEULE commande qui reste visible une fois toutes les autres masquées. */
+.cinema-exit-btn {
+  display: none;
+  position: absolute;
+  top: 0.4em;
+  right: 0.4em;
+  align-items: center;
+  justify-content: center;
+  width: 2.2em;
+  height: 2.2em;
+  border-radius: 50%;
+  background: rgba(20, 16, 12, 0.85);
+  color: #fff8ec;
+  border: 2px solid var(--ink);
+  font-size: 1rem;
+  z-index: 20;
+}
+
 /* Media console / VCR */
 .media-console {
   position: absolute;
@@ -1331,6 +1351,13 @@ button {
     width: 92vw;
   }
 
+  /* Écran 16:9 (plus "widescreen") par défaut sur mobile, à l'endroit,
+     dans la mise en page normale — voir plus bas pour le mode plein écran
+     pivoté, activé uniquement via le bouton "Écran". */
+  .tv-screen {
+    aspect-ratio: 16 / 9;
+  }
+
   .remote {
     position: fixed;
     left: 0;
@@ -1356,24 +1383,28 @@ button {
 }
 
 /*
- * Mobile en portrait : la télé pivote de 90° pour s'afficher en grand
- * format paysage (comme un lecteur vidéo passé en plein écran), même si le
- * téléphone reste tenu à la verticale. .tv-unit devient la boîte englobante
- * "à l'endroit" (celle qu'on voit réellement à l'écran, en 16:9) ; à
- * l'intérieur, .tv-frame-rotator a des dimensions inversées (portrait,
- * 9:16) qui, une fois pivotées de 90°, remplissent exactement cette boîte.
+ * Mode "grand écran" mobile (bouton "⛶ Écran" de la télécommande, ou
+ * double-clic sur l'écran — même mécanisme que .cinema-mode ailleurs) :
+ * la télé pivote de 90° pour s'afficher en grand format paysage, à tenir en
+ * tournant le téléphone à l'horizontale, avec TOUTES les commandes
+ * masquées sauf un bouton dédié pour revenir à l'écran normal.
+ *
+ * .tv-unit devient la boîte englobante "à l'endroit" (16:9, celle qu'on
+ * obtient une fois le téléphone tourné) ; à l'intérieur, .tv-frame-rotator
+ * a des dimensions inversées (portrait, 9:16) qui, une fois pivotées de
+ * 90°, remplissent exactement cette boîte.
  */
 @media (max-width: 760px) and (orientation: portrait) {
-  .tv-unit {
+  .cinema-mode .tv-unit {
     position: fixed;
-    top: 44%;
+    top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     width: min(94vw, 640px);
     height: calc(min(94vw, 640px) * 9 / 16);
   }
 
-  .tv-frame-rotator {
+  .cinema-mode .tv-frame-rotator {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -1383,27 +1414,32 @@ button {
     transform-origin: center center;
   }
 
-  .tv-set,
-  .tv-set__frame,
-  .tv-screen {
+  .cinema-mode .tv-set,
+  .cinema-mode .tv-set__frame,
+  .cinema-mode .tv-screen {
     width: 100%;
     height: 100%;
     aspect-ratio: auto;
   }
 
-  .tv-set__frame {
+  .cinema-mode .tv-set__frame {
     padding: 2%;
   }
 
-  .tv-legs,
-  .tv-set__brand {
+  /* Toutes les commandes disparaissent : il ne reste que le bouton pour
+     revenir à l'écran normal (voir .cinema-exit-btn plus bas). .remote et
+     .chat-* sont des SIBLINGS de #room (pas des descendants), d'où le
+     sélecteur de sibling général plutôt que ".cinema-mode .remote". */
+  #room.cinema-mode ~ .remote,
+  #room.cinema-mode ~ .chat-toggle,
+  #room.cinema-mode ~ .chat-panel {
     display: none;
   }
 
-  /* Reste hors de la rotation (sibling de .tv-frame-rotator, pas dedans) :
-     droit, lisible et cliquable normalement, en coin de l'écran. */
-  .tv-settings-btn {
-    top: 0.3em;
-    right: 0.3em;
+  /* Enfant de .tv-frame-rotator (voir index.html) : hérite donc de la même
+     rotation que l'écran et s'affiche à l'endroit une fois le téléphone
+     tourné, sans calcul de position compliqué. */
+  .cinema-mode .cinema-exit-btn {
+    display: flex;
   }
 }

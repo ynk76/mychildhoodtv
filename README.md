@@ -101,9 +101,9 @@ Chaque visiteur du tchat reçoit un pseudo aléatoire de personnage de dessin an
 - Écran de veille rétro après quelques minutes d'inactivité
 - Cycle jour/nuit (lampe de chevet à côté de la télé) + météo qui change derrière la fenêtre le jour, ciel étoilé la nuit
 - Easter eggs : lampe à lave animable au clic, horloge du magnétoscope à l'heure réelle (glitch amusant au clic), gros chat noir paresseux qui se balade rarement et s'allonge à différents endroits
-- Mode plein écran cinéma (bouton "⛶ Écran" sur la télécommande, ou double-clic sur l'écran ; `Échap` pour sortir)
+- Mode plein écran cinéma (bouton "⛶ Écran" sur la télécommande, ou double-clic sur l'écran ; `Échap` pour sortir). Sur mobile en portrait, ce mode masque en plus toutes les commandes (télécommande, tchat) et pivote l'écran pour l'afficher en grand format paysage, à regarder en tournant le téléphone à l'horizontale — un bouton "✕" dédié (qui pivote avec l'écran) permet d'en sortir
 - Ambiance sonore synthétisée (crépitement, tic-tac) avec bouton dédié pour la couper
-- Site responsive : sur mobile, la vue se recentre sur la télé et la télécommande. En portrait, la télé pivote et s'affiche en grand format paysage (16:9, façon lecteur vidéo plein écran) pour occuper un maximum de largeur d'écran, même téléphone tenu à la verticale
+- Site responsive : sur mobile, la vue se recentre sur la télé (en 16:9, à l'endroit) et la télécommande ; voir le mode plein écran cinéma ci-dessus pour la vue paysage
 
 ## Contraintes techniques respectées
 
