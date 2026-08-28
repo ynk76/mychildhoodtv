@@ -89,7 +89,7 @@ function initApp() {
     settingsPassword: document.getElementById("settings-password"),
     settingsAuthError: document.getElementById("settings-auth-error"),
     settingsBody: document.getElementById("settings-body"),
-    adminPlayerEl: document.getElementById("admin-player"),
+    adminPlayerEl: document.getElementById("admin-player-host"),
     adminPlayerSlot: document.getElementById("admin-player-slot"),
     settingsForm: document.getElementById("settings-form"),
     settingsName: document.getElementById("settings-name"),

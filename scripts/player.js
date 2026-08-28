@@ -18,6 +18,7 @@ class TVPlayer {
     this.player = null;
     this.ready = false;
     this._pending = null; // { type: "at"|"shuffled", channel, index, startSeconds } avant que le lecteur soit prêt
+    this._pendingRandomJump = false; // en attente que la playlist soit chargée pour sauter à un index aléatoire
     this._loadApi();
   }
 
@@ -81,6 +82,23 @@ class TVPlayer {
           if (typeof this.onReadyCallback === "function") this.onReadyCallback(e);
         },
         onStateChange: (e) => {
+          if (this._pendingRandomJump) {
+            const ids = this.getPlaylistIds();
+            // On attend que la playlist soit vraiment chargée (les tout premiers
+            // événements après loadPlaylist arrivent souvent avant que la liste
+            // ne soit disponible) avant de tirer un index au hasard.
+            if (ids && ids.length > 1) {
+              this._pendingRandomJump = false;
+              const randomIndex = Math.floor(Math.random() * ids.length);
+              if (randomIndex !== 0) {
+                try {
+                  this.player.playVideoAt(randomIndex);
+                } catch (err) {
+                  /* silencieux */
+                }
+              }
+            }
+          }
           if (typeof this.onStateChangeCallback === "function") this.onStateChangeCallback(e);
         },
         onError: () => {
@@ -105,8 +123,8 @@ class TVPlayer {
       this._pending = { type: "at", channel, index: index || 0, startSeconds: startSeconds || 0 };
       return;
     }
+    this._pendingRandomJump = false; // on charge une position précise, pas de saut aléatoire à faire
     try {
-      this.player.setShuffle(false);
       this.player.loadPlaylist({
         list: channel.playlistId,
         listType: "playlist",
@@ -119,9 +137,14 @@ class TVPlayer {
   }
 
   /**
-   * Charge une playlist en lecture aléatoire (nouvelle vidéo à chaque
-   * appel/rechargement de page) : utilisé quand personne ne pilote la
-   * diffusion depuis les réglages admin.
+   * Charge une playlist et démarre sur une vidéo aléatoire (nouvelle à
+   * chaque appel/rechargement de page) : utilisé quand personne ne pilote
+   * la diffusion depuis les réglages admin. On charge d'abord normalement
+   * (index 0), puis on saute à un index tiré au hasard dès que la playlist
+   * est effectivement disponible (onStateChange, voir _createPlayer) — la
+   * méthode native setShuffle() de l'API YouTube n'est fiable qu'une fois
+   * une playlist déjà chargée et ne permet pas de démarrer directement sur
+   * une vidéo au hasard.
    */
   playChannelShuffled(channel) {
     if (!this.ready || !this.player || typeof this.player.loadPlaylist !== "function") {
@@ -129,10 +152,10 @@ class TVPlayer {
       return;
     }
     try {
-      this.player.setShuffle(true);
-      this.player.loadPlaylist({ list: channel.playlistId, listType: "playlist" });
+      this._pendingRandomJump = true;
+      this.player.loadPlaylist({ list: channel.playlistId, listType: "playlist", index: 0 });
     } catch (e) {
-      /* silencieux */
+      this._pendingRandomJump = false;
     }
   }
 
