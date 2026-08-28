@@ -60,22 +60,9 @@ function initChat() {
     form.querySelector("button[type=submit]").disabled = true;
   }
 
-  const config = window.FIREBASE_CONFIG;
-  if (!config || !config.apiKey || !config.databaseURL) {
+  const db = window.getSharedDatabase ? window.getSharedDatabase() : null;
+  if (!db) {
     disableChat("Tchat non configuré pour ce site (voir scripts/firebase-config.js).");
-    return;
-  }
-  if (typeof firebase === "undefined") {
-    disableChat("Tchat indisponible (bibliothèque non chargée).");
-    return;
-  }
-
-  let db;
-  try {
-    firebase.initializeApp(config);
-    db = firebase.database();
-  } catch (e) {
-    disableChat("Tchat indisponible pour le moment.");
     return;
   }
 

@@ -126,28 +126,45 @@
 }
 
 /* Extinction façon vieux téléviseur : l'écran se réduit en un point puis noir */
+/* Le fond de cet overlay reste TOUJOURS noir opaque dès qu'il est visible :
+   seul le petit trait blanc à l'intérieur s'anime et disparaît, jamais le
+   noir lui-même (sinon on revoit l'image figée de la vidéo par-dessous). */
 .power-off-overlay {
   position: absolute;
   inset: 0;
   z-index: 30;
   background: #000;
   pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
-.power-off-overlay.power-off--playing {
-  animation: power-off-shrink 0.5s ease-in forwards;
+.power-off-overlay__scan {
+  width: 100%;
+  height: 6px;
+  background: #fff;
+  opacity: 0;
+  transform: scaleX(0);
 }
-@keyframes power-off-shrink {
+.power-off-overlay.power-off--playing .power-off-overlay__scan {
+  animation: power-off-scan 0.5s ease-in forwards;
+}
+@keyframes power-off-scan {
   0% {
-    clip-path: inset(0% 0% 0% 0%);
+    transform: scaleX(1);
+    height: 70%;
     opacity: 1;
   }
   70% {
-    clip-path: inset(49.5% 2% 49.5% 2%);
+    transform: scaleX(1);
+    height: 4px;
     opacity: 1;
   }
   100% {
-    clip-path: inset(50% 0% 50% 0%);
-    opacity: 1;
+    transform: scaleX(0);
+    height: 2px;
+    opacity: 0;
   }
 }
 

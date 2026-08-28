@@ -26,39 +26,56 @@ scripts/
   storage.js           Persistance localStorage (chaîne, volume, chaînes perso...)
   audio.js              Tous les sons (synthétisés en Web Audio API, pas de fichier audio)
   player.js             Wrapper autour de l'API YouTube IFrame
-  schedule.js            "Diffusion en direct" partagée par tous les visiteurs (voir plus bas)
+  schedule.js            "Diffusion en direct" (calcul de la vidéo/du moment à afficher)
+  firebase-init.js         Initialise Firebase une seule fois (partagé tchat + chaîne en direct)
+  shared-channel.js        La chaîne actuellement diffusée, partagée entre tous les visiteurs
   decor.js               Easter eggs (lampe à lave, horloge, chat), jour/nuit, météo
   screensaver.js          Écran de veille rétro après inactivité
   remote.js                Télécommande + réglages protégés par mot de passe + guide TV
-  firebase-config.js       <-- Configuration du tchat (voir plus bas)
+  firebase-config.js       <-- Configuration Firebase (tchat + chaîne en direct, voir plus bas)
   chat.js                  Tchat en direct entre visiteurs
   main.js                   Séquence de démarrage + branchement de tous les modules
 ```
 
 ## La diffusion "en direct"
 
-Il n'y a pas de serveur derrière ce site : pour que tout le monde regarde la même chose en même temps, chaque navigateur calcule indépendamment, à partir de l'heure (identique pour tout le monde), quelle vidéo de la playlist devrait être diffusée "maintenant" et à quel endroit — un peu comme une vraie chaîne de télé. Voir `scripts/schedule.js` pour le détail.
+Deux ingrédients :
 
-**Limite à connaître** : sans clé API YouTube, on ne connaît pas la durée réelle de chaque vidéo. Le calcul suppose donc une durée fixe par vidéo (4 minutes, réglable via `SLOT_SECONDS` dans `schedule.js`). Une vidéo plus courte peut donc rester figée sur sa dernière image jusqu'au créneau suivant, une vidéo plus longue peut être coupée. C'est un compromis pour rester 100% statique.
+1. **Le calcul du moment** (`scripts/schedule.js`) : chaque navigateur calcule, à partir de l'heure (identique pour tout le monde), quel numéro de vidéo de la playlist devrait être diffusé "maintenant" — un simple découpage du temps en créneaux fixes qui boucle sur la playlist. Volontairement peu interventionniste (pas de rattrapage seconde par seconde) pour éviter de perturber le lecteur YouTube (voir plus bas, pubs).
+2. **La chaîne elle-même, partagée** (`scripts/shared-channel.js`, via Firebase) : sans backend, chaque appareil gardait sa propre chaîne sélectionnée en mémoire locale — deux visiteurs sur deux appareils pouvaient donc se retrouver sur deux chaînes différentes, ce qui n'a rien de "en direct". La chaîne active (nom + playlist + **la liste exacte des vidéos qui la composent**) est donc stockée dans la même base Firebase que le tchat, écrite uniquement par l'admin (mot de passe) et lue par tout le monde en temps réel. Partager la liste de vidéos elle-même (pas juste l'ID de la playlist) évite aussi que deux appareils obtiennent une liste légèrement différente depuis YouTube (région, chargement partiel...) et calculent donc un numéro de vidéo différent pour la même minute.
+
+**Limites à connaître** :
+- Sans clé API YouTube, on ne connaît pas la durée réelle de chaque vidéo : le calcul suppose une durée fixe par créneau (4 minutes, réglable via `SLOT_SECONDS` dans `schedule.js`).
+- YouTube n'expose aucun moyen fiable de détecter/zapper une publicité depuis un site externe (volontaire de leur part) : le bouton "Ignorer la pub" des réglages fait de son mieux (recharge la vidéo) mais ne fonctionne pas à 100% des cas.
+- **Sans Firebase configuré**, chaque appareil reste indépendant pour le choix de chaîne (mais tout le monde a la même chaîne par défaut, codée en dur dans `config.js`).
 
 ## Réglages protégés par mot de passe
 
 Le bouton ⚙ au-dessus de la télé ouvre un panneau protégé par le mot de passe **`Foot2Rue`** (modifiable dans `scripts/remote.js`, constante `SETTINGS_PASSWORD`). Une fois déverrouillé, ce panneau permet de :
-- mettre la diffusion en pause, passer à la vidéo suivante, ou revenir au direct (sur cet appareil uniquement)
-- ajouter/choisir une chaîne personnalisée (playlist YouTube)
+- mettre la diffusion en pause, passer à la vidéo suivante, ou revenir au direct, ou tenter d'ignorer une pub (sur cet appareil uniquement)
+- ajouter/choisir une chaîne personnalisée (playlist YouTube) — **avec Firebase configuré, ce choix est diffusé à tous les visiteurs en temps réel** (voir la section suivante) ; sinon il ne change la chaîne que sur cet appareil
 
 ⚠️ **Ce mot de passe est vérifié côté navigateur**, dans du code visible par n'importe qui (comme tout site 100% statique sans serveur). C'est un verrou simple pour éviter qu'on y touche par mégarde, pas une vraie protection contre quelqu'un de déterminé à lire le code source.
 
-## Le tchat en direct (Firebase)
+## Firebase (tchat + chaîne en direct partagée)
 
-Le tchat a besoin d'un endroit partagé pour stocker les messages entre visiteurs ; ce dépôt utilise **Firebase Realtime Database** (gratuit). Pour l'activer :
+Le tchat et la synchronisation de la chaîne en direct ont besoin d'un endroit partagé pour stocker des données entre visiteurs ; ce dépôt utilise **Firebase Realtime Database** (gratuit) pour les deux. Pour l'activer :
 
 1. Ouvre `scripts/firebase-config.js` : les instructions complètes de création du projet Firebase (gratuit, 5 minutes, sans carte bancaire) y sont détaillées en commentaire.
 2. Colle la configuration de ton projet Firebase dans ce fichier.
+3. Dans les règles de ta Realtime Database (onglet "Règles"), assure-toi d'avoir bien les DEUX chemins suivants (pas seulement `messages`) :
+   ```json
+   {
+     "rules": {
+       "messages": { ".read": true, ".write": true },
+       "liveChannel": { ".read": true, ".write": true }
+     }
+   }
+   ```
 
-Sans configuration, le tchat affiche simplement "non configuré" et le reste du site fonctionne normalement.
+Sans configuration, le tchat affiche "non configuré" et la chaîne en direct reste locale à chaque appareil — le reste du site fonctionne normalement dans les deux cas.
 
-Chaque visiteur reçoit un pseudo aléatoire de personnage de dessin animé des années 2000 (Titeuf, Oggy, Kim Possible...), différent à chaque nouvelle visite.
+Chaque visiteur du tchat reçoit un pseudo aléatoire de personnage de dessin animé des années 2000 (Titeuf, Oggy, Kim Possible...), différent à chaque nouvelle visite.
 
 ## Fonctionnalités
 

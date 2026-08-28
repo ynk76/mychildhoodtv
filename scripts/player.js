@@ -17,7 +17,7 @@ class TVPlayer {
     this.onEndedCallback = null; // assignable après coup (voir schedule.js)
     this.player = null;
     this.ready = false;
-    this._pendingChannel = null;
+    this._pending = null; // { channel, index } demandé avant que le lecteur soit prêt
     this._loadApi();
   }
 
@@ -66,9 +66,10 @@ class TVPlayer {
         onReady: (e) => {
           this.ready = true;
           e.target.setVolume(this.initialVolume);
-          if (this._pendingChannel) {
-            this.playChannel(this._pendingChannel);
-            this._pendingChannel = null;
+          if (this._pending) {
+            const { channel, index } = this._pending;
+            this._pending = null;
+            this.playChannelAt(channel, index);
           }
           if (typeof this.onReadyCallback === "function") this.onReadyCallback(e);
         },
@@ -92,7 +93,7 @@ class TVPlayer {
   /** Comme playChannel, mais démarre directement au N-ième élément de la playlist. */
   playChannelAt(channel, index) {
     if (!this.ready || !this.player || typeof this.player.loadPlaylist !== "function") {
-      this._pendingChannel = channel;
+      this._pending = { channel, index: index || 0 };
       return;
     }
     try {

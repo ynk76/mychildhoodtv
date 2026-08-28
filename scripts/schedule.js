@@ -77,6 +77,29 @@ class LiveSchedule {
     }
   }
 
+  /**
+   * Comme start(), mais avec la liste de vidéos déjà connue (reçue via
+   * SharedChannel) : on saute directement au bon endroit, sans jamais
+   * passer par la première vidéo de la playlist ni interroger YouTube.
+   */
+  startWithKnownList(channel, videoIds) {
+    this.live = true;
+    this._lastChannel = channel;
+    this.playlistIds = videoIds;
+    playlistCache.set(channel.playlistId, videoIds);
+    clearTimeout(this._pollTimer);
+    clearInterval(this._safetyTimer);
+    const index = this._currentIndex();
+    this._lastIndex = index;
+    if (this.active) {
+      this.player.playChannelAt(channel, index);
+      this._armSafetyCheck();
+    } else {
+      this.player.playChannel(channel);
+      this.player.pause();
+    }
+  }
+
   _waitForPlaylist(attempts = 0) {
     const ids = this.player.getPlaylistIds();
     if (ids && ids.length) {

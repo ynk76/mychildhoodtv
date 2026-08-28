@@ -54,6 +54,7 @@ class RemoteControl {
     this.muted = Storage.getMuted();
     this.power = Storage.getPower();
     this.currentIndex = this._resolveInitialIndex();
+    this.sharedChannel = new SharedChannel();
 
     this.player = new TVPlayer({
       elementId: "player",
@@ -62,13 +63,19 @@ class RemoteControl {
         this._applyVolumeState();
         // on démarre toujours la diffusion en arrière-plan (pour être déjà
         // synchronisé dès l'allumage), mais elle ne joue/affiche rien tant
-        // que la télé est éteinte (voir LiveSchedule.active)
-        this.liveSchedule.start(this.currentChannel());
+        // que la télé est éteinte (voir LiveSchedule.active). Si une chaîne
+        // partagée existe (Firebase), c'est elle qui décidera via onChange
+        // ci-dessous ; sinon on démarre avec la chaîne locale par défaut.
+        if (!this.sharedChannel.available) this.liveSchedule.start(this.currentChannel());
         if (!this.power) this.player.pause();
       },
     });
     this.liveSchedule = new LiveSchedule(this.player);
     this.liveSchedule.active = this.power;
+
+    if (this.sharedChannel.available) {
+      this.sharedChannel.onChange((shared) => this._applySharedChannel(shared));
+    }
 
     this._bindButtons();
     this._bindSettings();
@@ -78,6 +85,38 @@ class RemoteControl {
 
     if (this.power) {
       this._showBanner(this.currentChannel());
+    }
+  }
+
+  /** Reçu de Firebase : l'admin (ou nous-même) a défini/changé la chaîne partagée. */
+  _applySharedChannel(shared) {
+    let idx = this.channels.findIndex((c) => c.playlistId === shared.playlistId);
+    if (idx === -1) {
+      this.channels = this.channels.concat([{ name: shared.name, playlistId: shared.playlistId, number: -1 }]);
+      idx = this.channels.length - 1;
+    }
+    const sameChannelAlreadyPlaying = idx === this.currentIndex && this.liveSchedule.playlistIds;
+    this.currentIndex = idx;
+    if (sameChannelAlreadyPlaying) {
+      // même chaîne déjà à l'écran : on met juste à jour la liste connue
+      // (utile si l'admin l'a rafraîchie) sans rien interrompre à l'écran
+      this.liveSchedule.playlistIds = shared.videoIds;
+    } else {
+      this.liveSchedule.startWithKnownList(this.channels[idx], shared.videoIds);
+      if (this.power) this._showBanner(this.channels[idx]);
+    }
+    this._renderChannelList();
+  }
+
+  /** Admin : republie la chaîne (+ sa liste de vidéos) dès qu'elle est connue, pour tout le monde. */
+  _publishChannelWhenReady(channel, attempts = 0) {
+    if (!this.sharedChannel.available) return;
+    const ids = this.liveSchedule.playlistIds;
+    const stillOnThisChannel = this.liveSchedule._lastChannel && this.liveSchedule._lastChannel.playlistId === channel.playlistId;
+    if (ids && ids.length && stillOnThisChannel) {
+      this.sharedChannel.publish(channel, ids);
+    } else if (attempts < 40) {
+      setTimeout(() => this._publishChannelWhenReady(channel, attempts + 1), 250);
     }
   }
 
@@ -152,10 +191,19 @@ class RemoteControl {
   }
 
   selectChannel(index) {
-    if (index === this.currentIndex) return;
+    const alreadyCurrent = index === this.currentIndex;
     this.currentIndex = index;
     const channel = this.currentChannel();
     Storage.setLastChannel(channel.number);
+
+    if (alreadyCurrent) {
+      // déjà affichée ici : un clic dessus sert à (re)diffuser cette chaîne
+      // à tout le monde (utile pour amorcer la diffusion partagée la toute
+      // première fois, ou si Firebase a raté une mise à jour)
+      if (this.sharedChannel.available) this._publishChannelWhenReady(channel);
+      return;
+    }
+
     Audio2000.remoteClick();
     const staticEl = this.dom.staticOverlay;
     staticEl.hidden = false;
@@ -164,6 +212,7 @@ class RemoteControl {
       staticEl.hidden = true;
       this.liveSchedule.start(channel);
       this._showBanner(channel);
+      if (this.sharedChannel.available) this._publishChannelWhenReady(channel);
     }, 400);
   }
 
@@ -317,8 +366,10 @@ class RemoteControl {
           this.channels = Storage.getAllChannels();
           if (this.currentIndex >= this.channels.length) {
             this.currentIndex = 0;
-            Storage.setLastChannel(this.currentChannel().number);
-            if (this.power) this.liveSchedule.start(this.currentChannel());
+            const fallback = this.currentChannel();
+            Storage.setLastChannel(fallback.number);
+            this.liveSchedule.start(fallback);
+            if (this.sharedChannel.available) this._publishChannelWhenReady(fallback);
           }
           this._renderChannelList();
         });
