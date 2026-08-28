@@ -178,16 +178,14 @@
     </div>
 
     <div id="settings-body" hidden>
-      <div class="settings-admin">
-        <span id="settings-live-status" class="settings-live-status">🔴 En direct</span>
-        <div class="settings-admin__buttons">
-          <button id="btn-admin-pause" type="button" class="btn-secondary">⏸ Pause</button>
-          <button id="btn-admin-next" type="button" class="btn-secondary">⏭ Suivant</button>
-          <button id="btn-admin-live" type="button" class="btn-secondary">🔴 Revenir au direct</button>
-          <button id="btn-admin-skip-ad" type="button" class="btn-secondary">⏭️ Ignorer la pub</button>
-        </div>
-        <p class="settings-hint">"Ignorer la pub" recharge la vidéo en cours : YouTube ne permet pas de détecter/zapper une publicité de façon fiable depuis un site externe, donc ça ne marche pas à tous les coups.</p>
+      <span id="settings-live-status" class="settings-live-status">🔴 En direct</span>
+
+      <p class="settings-hint">Lecteur studio : choisis une chaîne ci-dessous, puis pilote-la avec les contrôles YouTube normaux (lecture, pause, avancer...). Tout ce qui se passe ici est diffusé en direct sur la télé du salon, pour tout le monde.</p>
+      <div class="admin-player-wrap">
+        <div id="admin-player"></div>
       </div>
+
+      <ul id="settings-list" class="settings-list"></ul>
 
       <form id="settings-form" class="settings-form">
         <label>Nom de la chaîne
@@ -198,8 +196,7 @@
         </label>
         <button type="submit" class="btn-primary">Ajouter la chaîne</button>
       </form>
-      <p class="settings-hint">Astuce : un simple lien de vidéo fonctionne aussi (une playlist "mix" sera générée automatiquement). Clique sur une chaîne ci-dessous pour la regarder.</p>
-      <ul id="settings-list" class="settings-list"></ul>
+      <p class="settings-hint">Astuce : un simple lien de vidéo fonctionne aussi (une playlist "mix" sera générée automatiquement).</p>
     </div>
   </div>
 </div>
@@ -249,6 +246,7 @@
 <script src="scripts/firebase-config.js"></script>
 <script src="scripts/firebase-init.js"></script>
 <script src="scripts/shared-channel.js"></script>
+<script src="scripts/admin-player.js"></script>
 <script src="scripts/chat.js"></script>
 <script src="scripts/decor.js"></script>
 <script src="scripts/screensaver.js"></script>

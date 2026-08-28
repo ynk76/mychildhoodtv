@@ -2,9 +2,10 @@
  * ============================================================================
  *  TVPlayer — wrapper autour de l'API YouTube IFrame officielle.
  * ============================================================================
- *  Un SEUL lecteur YouTube est instancié pour toute la session (contrainte
- *  de perf du cahier des charges). Changer de "chaîne" recharge simplement
- *  une nouvelle playlist dans ce même lecteur via loadPlaylist().
+ *  C'est le lecteur "invisible" du salon, celui que voient tous les
+ *  visiteurs (un seul instancié pour cette page, contrainte de perf du
+ *  cahier des charges). Le lecteur "studio" visible dans les réglages admin
+ *  est une instance séparée, voir scripts/admin-player.js.
  * ============================================================================
  */
 
@@ -14,10 +15,9 @@ class TVPlayer {
     this.initialVolume = initialVolume;
     this.onReadyCallback = onReady;
     this.onStateChangeCallback = onStateChange;
-    this.onEndedCallback = null; // assignable après coup (voir schedule.js)
     this.player = null;
     this.ready = false;
-    this._pending = null; // { channel, index } demandé avant que le lecteur soit prêt
+    this._pending = null; // { channel, index, startSeconds } demandé avant que le lecteur soit prêt
     this._loadApi();
   }
 
@@ -67,37 +67,46 @@ class TVPlayer {
           this.ready = true;
           e.target.setVolume(this.initialVolume);
           if (this._pending) {
-            const { channel, index } = this._pending;
+            const { channel, index, startSeconds } = this._pending;
             this._pending = null;
-            this.playChannelAt(channel, index);
+            this.loadPlaylistAt(channel, index, startSeconds);
           }
           if (typeof this.onReadyCallback === "function") this.onReadyCallback(e);
         },
         onStateChange: (e) => {
-          if (e.data === YT.PlayerState.ENDED && typeof this.onEndedCallback === "function") {
-            this.onEndedCallback();
-          }
           if (typeof this.onStateChangeCallback === "function") this.onStateChangeCallback(e);
         },
         onError: () => {
-          // Playlist indisponible : on ignore, l'écran garde juste l'effet CRT.
+          // Playlist indisponible : on ignore, l'écran garde juste le fond noir.
         },
       },
     });
   }
 
   playChannel(channel) {
-    this.playChannelAt(channel, 0);
+    this.loadPlaylistAt(channel, 0, 0);
   }
 
-  /** Comme playChannel, mais démarre directement au N-ième élément de la playlist. */
-  playChannelAt(channel, index) {
+  /**
+   * Charge une playlist directement au N-ième élément, à la Xème seconde.
+   * C'est la seule méthode de chargement : rejoindre "en cours" (comme une
+   * vraie TV) ou démarrer au début ne sont que des cas particuliers
+   * (index/startSeconds à 0). Une fois chargée, la playlist avance ensuite
+   * toute seule via le mécanisme natif de YouTube (pas d'intervention JS
+   * nécessaire, ce qui évite bien des soucis avec les publicités).
+   */
+  loadPlaylistAt(channel, index, startSeconds) {
     if (!this.ready || !this.player || typeof this.player.loadPlaylist !== "function") {
-      this._pending = { channel, index: index || 0 };
+      this._pending = { channel, index: index || 0, startSeconds: startSeconds || 0 };
       return;
     }
     try {
-      this.player.loadPlaylist({ list: channel.playlistId, listType: "playlist", index: index || 0 });
+      this.player.loadPlaylist({
+        list: channel.playlistId,
+        listType: "playlist",
+        index: index || 0,
+        startSeconds: startSeconds || 0,
+      });
     } catch (e) {
       /* playlist invalide fournie par l'utilisateur : silencieux */
     }
@@ -133,32 +142,11 @@ class TVPlayer {
     }
   }
 
-  playVideoAt(index) {
-    if (!this.ready || !this.player) return;
+  /** Position (0-based) de la vidéo en cours dans la playlist. */
+  getPlaylistIndex() {
+    if (!this.ready || !this.player || typeof this.player.getPlaylistIndex !== "function") return null;
     try {
-      this.player.playVideoAt(index);
-    } catch (e) {
-      /* index hors limites : silencieux */
-    }
-  }
-
-  seekTo(seconds) {
-    if (!this.ready || !this.player) return;
-    try {
-      this.player.seekTo(seconds, true);
-    } catch (e) {
-      /* silencieux */
-    }
-  }
-
-  nextVideo() {
-    if (this.ready && this.player) this.player.nextVideo();
-  }
-
-  getCurrentTime() {
-    if (!this.ready || !this.player || typeof this.player.getCurrentTime !== "function") return null;
-    try {
-      return this.player.getCurrentTime();
+      return this.player.getPlaylistIndex();
     } catch (e) {
       return null;
     }

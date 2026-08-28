@@ -26,9 +26,10 @@ scripts/
   storage.js           Persistance localStorage (chaîne, volume, chaînes perso...)
   audio.js              Tous les sons (synthétisés en Web Audio API, pas de fichier audio)
   player.js             Wrapper autour de l'API YouTube IFrame
-  schedule.js            "Diffusion en direct" (calcul de la vidéo/du moment à afficher)
+  schedule.js            Applique au lecteur du salon une position "en direct" reçue
   firebase-init.js         Initialise Firebase une seule fois (partagé tchat + chaîne en direct)
-  shared-channel.js        La chaîne actuellement diffusée, partagée entre tous les visiteurs
+  shared-channel.js        La position en direct (chaîne + vidéo + seconde), partagée entre tous
+  admin-player.js          Le lecteur "studio" (natif, visible dans les réglages admin)
   decor.js               Easter eggs (lampe à lave, horloge, chat), jour/nuit, météo
   screensaver.js          Écran de veille rétro après inactivité
   remote.js                Télécommande + réglages protégés par mot de passe + guide TV
@@ -39,21 +40,24 @@ scripts/
 
 ## La diffusion "en direct"
 
-Deux ingrédients :
+Sans serveur permanent, il faut bien qu'une machine décide "ce qui passe en ce moment" — c'est l'admin qui joue ce rôle, via un vrai lecteur YouTube (natif, avec ses contrôles normaux) visible dans les réglages (`scripts/admin-player.js`) :
 
-1. **Le calcul du moment** (`scripts/schedule.js`) : chaque navigateur calcule, à partir de l'heure (identique pour tout le monde), quel numéro de vidéo de la playlist devrait être diffusé "maintenant" — un simple découpage du temps en créneaux fixes qui boucle sur la playlist. Volontairement peu interventionniste (pas de rattrapage seconde par seconde) pour éviter de perturber le lecteur YouTube (voir plus bas, pubs).
-2. **La chaîne elle-même, partagée** (`scripts/shared-channel.js`, via Firebase) : sans backend, chaque appareil gardait sa propre chaîne sélectionnée en mémoire locale — deux visiteurs sur deux appareils pouvaient donc se retrouver sur deux chaînes différentes, ce qui n'a rien de "en direct". La chaîne active (nom + playlist + **la liste exacte des vidéos qui la composent**) est donc stockée dans la même base Firebase que le tchat, écrite uniquement par l'admin (mot de passe) et lue par tout le monde en temps réel. Partager la liste de vidéos elle-même (pas juste l'ID de la playlist) évite aussi que deux appareils obtiennent une liste légèrement différente depuis YouTube (région, chargement partiel...) et calculent donc un numéro de vidéo différent pour la même minute.
+1. L'admin choisit une chaîne, puis la pilote avec l'interface YouTube normale (lecture, pause, avancer, vidéo suivante...) — plus fiable qu'une télécommande maison, puisque ça s'appuie sur le lecteur officiel.
+2. Toutes les ~4 secondes, la position de ce lecteur (chaîne + numéro de vidéo dans la playlist + seconde + en pause ou non) est publiée dans Firebase (`scripts/shared-channel.js`), la même base que le tchat.
+3. Tous les visiteurs (télé du salon) reçoivent cette position en temps réel et la reproduisent, en rattrapant le temps écoulé depuis la publication — comme rejoindre une vraie chaîne de télé déjà en cours. Une fois la playlist chargée à la bonne vidéo, elle continue nativement toute seule (YouTube gère lui-même la suite de la playlist) : aucune intervention JS répétée qui risquerait de perturber une publicité en cours.
 
 **Limites à connaître** :
-- Sans clé API YouTube, on ne connaît pas la durée réelle de chaque vidéo : le calcul suppose une durée fixe par créneau (4 minutes, réglable via `SLOT_SECONDS` dans `schedule.js`).
-- YouTube n'expose aucun moyen fiable de détecter/zapper une publicité depuis un site externe (volontaire de leur part) : le bouton "Ignorer la pub" des réglages fait de son mieux (recharge la vidéo) mais ne fonctionne pas à 100% des cas.
-- **Sans Firebase configuré**, chaque appareil reste indépendant pour le choix de chaîne (mais tout le monde a la même chaîne par défaut, codée en dur dans `config.js`).
+- La synchronisation fine entre appareils dépend de la fraîcheur de la dernière publication de l'admin ; si personne n'a de lecteur studio ouvert depuis longtemps, chaque appareil continue de son côté sur la playlist native de YouTube (qui reste cohérente, juste sans garantie de être exactement au même endroit à la seconde près).
+- YouTube n'expose aucun moyen fiable de détecter/zapper une publicité depuis un site externe (volontaire de leur part) : c'est un lecteur YouTube tout à fait normal.
+- **Sans Firebase configuré**, chaque appareil reste indépendant et démarre simplement la chaîne par défaut depuis le début (codée en dur dans `config.js`).
 
 ## Réglages protégés par mot de passe
 
-Le bouton ⚙ au-dessus de la télé ouvre un panneau protégé par le mot de passe **`Foot2Rue`** (modifiable dans `scripts/remote.js`, constante `SETTINGS_PASSWORD`). Une fois déverrouillé, ce panneau permet de :
-- mettre la diffusion en pause, passer à la vidéo suivante, ou revenir au direct, ou tenter d'ignorer une pub (sur cet appareil uniquement)
-- ajouter/choisir une chaîne personnalisée (playlist YouTube) — **avec Firebase configuré, ce choix est diffusé à tous les visiteurs en temps réel** (voir la section suivante) ; sinon il ne change la chaîne que sur cet appareil
+Le bouton ⚙ au-dessus de la télé ouvre un panneau protégé par le mot de passe **`Foot2Rue`** (modifiable dans `scripts/remote.js`, constante `SETTINGS_PASSWORD`). Une fois déverrouillé, ce panneau donne accès à :
+- un vrai lecteur YouTube (le "studio") pour choisir et piloter la chaîne diffusée
+- l'ajout d'une chaîne personnalisée (playlist YouTube)
+
+**Avec Firebase configuré, tout ce que l'admin fait dans ce lecteur studio est diffusé à tous les visiteurs en temps réel** (voir la section suivante) ; sans Firebase, ça ne change la chaîne que sur cet appareil.
 
 ⚠️ **Ce mot de passe est vérifié côté navigateur**, dans du code visible par n'importe qui (comme tout site 100% statique sans serveur). C'est un verrou simple pour éviter qu'on y touche par mégarde, pas une vraie protection contre quelqu'un de déterminé à lire le code source.
 
@@ -87,7 +91,7 @@ Chaque visiteur du tchat reçoit un pseudo aléatoire de personnage de dessin an
 
 **Bonus**
 - Écran de démarrage rétro façon connexion bas débit
-- Réglages protégés par mot de passe (choix de chaîne, pause/suivant/direct)
+- Réglages protégés par mot de passe, avec un vrai lecteur YouTube "studio" pour piloter la diffusion
 - Tchat en direct entre visiteurs (Firebase, voir plus haut)
 - Écran de veille rétro après quelques minutes d'inactivité
 - Cycle jour/nuit (lampe de chevet à côté de la télé) + météo qui change derrière la fenêtre le jour, ciel étoilé la nuit
@@ -98,6 +102,6 @@ Chaque visiteur du tchat reçoit un pseudo aléatoire de personnage de dessin an
 
 ## Contraintes techniques respectées
 
-- Un seul lecteur YouTube instancié à la fois
+- Un seul lecteur YouTube instancié côté salon pour tous les visiteurs ; un second lecteur "studio" n'existe que le temps où l'admin a les réglages ouverts et déverrouillés (détruit à la fermeture)
 - Aucune dépendance serveur pour la télé (tout tourne côté front) ; le tchat utilise Firebase (backend géré, pas de serveur à maintenir)
 - Aucun fichier audio/image externe : les sons sont synthétisés (Web Audio API) et le décor est fait en CSS/SVG inline

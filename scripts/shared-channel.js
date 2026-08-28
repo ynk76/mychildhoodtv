@@ -1,28 +1,23 @@
 /**
  * ============================================================================
- *  SharedChannel — la chaîne "en direct" est la même pour TOUT LE MONDE.
+ *  SharedChannel — la position "en direct" est la même pour TOUT LE MONDE.
  * ============================================================================
- *  Sans backend, chaque appareil gardait sa propre chaîne en mémoire locale
- *  (localStorage) : deux visiteurs sur deux appareils différents pouvaient
- *  donc se retrouver chacun sur une chaîne différente, ce qui n'a rien de
- *  "en direct". SharedChannel stocke la chaîne active dans la même base
- *  Firebase que le tchat (aucun nouveau service à créer) :
- *    - l'admin (mot de passe requis, voir remote.js) est seul à pouvoir
- *      changer la chaîne pour tout le monde,
- *    - tous les visiteurs (y compris l'admin) reçoivent ce changement en
- *      temps réel.
+ *  Le lecteur "studio" visible dans les réglages admin (mot de passe requis,
+ *  voir scripts/admin-player.js) est la source de vérité : tout ce que
+ *  l'admin y fait (choisir une vidéo, avancer, mettre en pause) est publié
+ *  ici, dans la même base Firebase que le tchat (aucun nouveau service à
+ *  créer). Tous les visiteurs (y compris l'admin) reçoivent cette position
+ *  en temps réel et la reproduisent sur la télé du salon.
  *
- *  On y stocke aussi la LISTE EXACTE des vidéos de la playlist au moment de
- *  la sélection (pas seulement son ID). Sans ça, deux appareils qui
- *  interrogent YouTube séparément peuvent obtenir une liste légèrement
- *  différente (région, playlist encore en cours de chargement...), et donc
- *  calculer un index différent pour la même minute — exactement la cause du
- *  "chacun voit une vidéo différente". En partageant la liste elle-même,
- *  tout le monde fait le même calcul sur les mêmes données.
+ *  On publie {playlistId, index, currentTime, paused, updatedAt}. Chaque
+ *  visiteur calcule le temps écoulé depuis "updatedAt" pour rattraper le
+ *  direct même s'il arrive après coup — exactement comme rejoindre une
+ *  vraie chaîne de télé en cours de diffusion.
  *
  *  Sans Firebase configuré : SharedChannel.available vaut false et le site
- *  revient au fonctionnement local précédent (chaîne par défaut identique
- *  pour tous de toute façon, car codée en dur dans config.js).
+ *  revient au fonctionnement local (chaîne par défaut identique pour tous
+ *  de toute façon, car codée en dur dans config.js, mais sans garantie de
+ *  synchronisation fine entre appareils).
  * ============================================================================
  */
 
@@ -36,14 +31,14 @@ class SharedChannel {
     return !!this.ref;
   }
 
-  /** Appelé à la connexion, puis à chaque fois que l'admin change de chaîne. */
+  /** Appelé à la connexion, puis à chaque mise à jour de l'admin. */
   onChange(callback) {
     if (!this.ref) return;
     this.ref.on(
       "value",
       (snapshot) => {
         const val = snapshot.val();
-        if (val && val.playlistId && Array.isArray(val.videoIds) && val.videoIds.length) {
+        if (val && val.playlistId && typeof val.index === "number" && typeof val.updatedAt === "number") {
           callback(val);
         }
       },
@@ -53,13 +48,15 @@ class SharedChannel {
     );
   }
 
-  /** Admin uniquement : diffuse une nouvelle chaîne (+ sa liste de vidéos) à tout le monde. */
-  publish(channel, videoIds) {
+  /** Admin uniquement (via le lecteur studio) : publie la position actuelle pour tout le monde. */
+  publishPosition(channel, index, currentTime, paused) {
     if (!this.ref) return;
     this.ref.set({
       name: channel.name,
       playlistId: channel.playlistId,
-      videoIds,
+      index,
+      currentTime,
+      paused: !!paused,
       updatedAt: Date.now(),
     });
   }

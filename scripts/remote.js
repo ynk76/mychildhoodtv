@@ -1,7 +1,7 @@
 /**
  * Télécommande : power, volume, plein écran, guide des programmes (public),
- * et réglages protégés par mot de passe (choix de chaîne + pilotage de la
- * diffusion en direct).
+ * et réglages protégés par mot de passe (choix de chaîne via un vrai
+ * lecteur YouTube "studio", voir scripts/admin-player.js).
  *
  * NB sécurité : le mot de passe est vérifié côté navigateur, dans du code
  * public (comme tout site 100% statique sans serveur). N'importe qui peut le
@@ -54,6 +54,8 @@ class RemoteControl {
     this.muted = Storage.getMuted();
     this.power = Storage.getPower();
     this.currentIndex = this._resolveInitialIndex();
+    this.adminSelectedIndex = this.currentIndex;
+    this.adminPlayer = null;
     this.sharedChannel = new SharedChannel();
 
     this.player = new TVPlayer({
@@ -61,26 +63,22 @@ class RemoteControl {
       initialVolume: this.volume,
       onReady: () => {
         this._applyVolumeState();
-        // on démarre toujours la diffusion en arrière-plan (pour être déjà
-        // synchronisé dès l'allumage), mais elle ne joue/affiche rien tant
-        // que la télé est éteinte (voir LiveSchedule.active). Si une chaîne
-        // partagée existe (Firebase), c'est elle qui décidera via onChange
-        // ci-dessous ; sinon on démarre avec la chaîne locale par défaut.
-        if (!this.sharedChannel.available) this.liveSchedule.start(this.currentChannel());
+        // Sans diffusion partagée (Firebase), on démarre localement avec la
+        // chaîne par défaut ; sinon on attend la position venant de
+        // l'admin (voir onChange ci-dessous), qui arrive quasi aussitôt.
+        if (!this.sharedChannel.available) this.liveSchedule.startDefault(this.currentChannel());
         if (!this.power) this.player.pause();
       },
     });
     this.liveSchedule = new LiveSchedule(this.player);
-    this.liveSchedule.active = this.power;
 
     if (this.sharedChannel.available) {
       this.sharedChannel.onChange((shared) => this._applySharedChannel(shared));
-      // Filet de sécurité : si aucune chaîne partagée n'a encore jamais été
-      // "amorcée" côté Firebase (personne n'a encore cliqué sur une chaîne
-      // dans les réglages), on ne doit pas rester muet indéfiniment — on
-      // démarre quand même avec la chaîne locale par défaut.
+      // Filet de sécurité : si l'admin n'a encore jamais rien publié, on ne
+      // reste pas silencieux indéfiniment — on démarre avec la chaîne par
+      // défaut en attendant.
       setTimeout(() => {
-        if (!this.liveSchedule.playlistIds) this.liveSchedule.start(this.currentChannel());
+        if (!this.liveSchedule.channel) this.liveSchedule.startDefault(this.currentChannel());
       }, 3000);
     }
 
@@ -95,36 +93,37 @@ class RemoteControl {
     }
   }
 
-  /** Reçu de Firebase : l'admin (ou nous-même) a défini/changé la chaîne partagée. */
+  /** Reçu de Firebase : l'admin a choisi/avancé/mis en pause la diffusion, pour tout le monde. */
   _applySharedChannel(shared) {
     let idx = this.channels.findIndex((c) => c.playlistId === shared.playlistId);
     if (idx === -1) {
       this.channels = this.channels.concat([{ name: shared.name, playlistId: shared.playlistId, number: -1 }]);
       idx = this.channels.length - 1;
     }
-    const sameChannelAlreadyPlaying = idx === this.currentIndex && this.liveSchedule.playlistIds;
+    const isNewVideo = !(
+      this.liveSchedule.channel &&
+      this.liveSchedule.channel.playlistId === shared.playlistId &&
+      this.liveSchedule.index === shared.index
+    );
     this.currentIndex = idx;
-    if (sameChannelAlreadyPlaying) {
-      // même chaîne déjà à l'écran : on met juste à jour la liste connue
-      // (utile si l'admin l'a rafraîchie) sans rien interrompre à l'écran
-      this.liveSchedule.playlistIds = shared.videoIds;
-    } else {
-      this.liveSchedule.startWithKnownList(this.channels[idx], shared.videoIds);
-      if (this.power) this._showBanner(this.channels[idx]);
-    }
-    this._renderChannelList();
-  }
 
-  /** Admin : republie la chaîne (+ sa liste de vidéos) dès qu'elle est connue, pour tout le monde. */
-  _publishChannelWhenReady(channel, attempts = 0) {
-    if (!this.sharedChannel.available) return;
-    const ids = this.liveSchedule.playlistIds;
-    const stillOnThisChannel = this.liveSchedule._lastChannel && this.liveSchedule._lastChannel.playlistId === channel.playlistId;
-    if (ids && ids.length && stillOnThisChannel) {
-      this.sharedChannel.publish(channel, ids);
-    } else if (attempts < 40) {
-      setTimeout(() => this._publishChannelWhenReady(channel, attempts + 1), 250);
+    // On rattrape le temps écoulé depuis que l'admin a publié cette
+    // position, pour rejoindre "en cours" comme une vraie chaîne de télé.
+    const elapsed = Math.max(0, (Date.now() - shared.updatedAt) / 1000);
+    const currentTime = (shared.currentTime || 0) + (shared.paused ? 0 : elapsed);
+
+    if (isNewVideo && this.power) {
+      Audio2000.staticBurst(0.3);
+      this.dom.staticOverlay.hidden = false;
+      setTimeout(() => (this.dom.staticOverlay.hidden = true), 350);
     }
+
+    this.liveSchedule.join(this.channels[idx], shared.index, currentTime, shared.paused);
+    if (!this.power) this.player.pause();
+    else this._showBanner(this.channels[idx]);
+
+    this._renderLiveStatus();
+    this._renderChannelList();
   }
 
   _resolveInitialIndex() {
@@ -171,10 +170,10 @@ class RemoteControl {
     Audio2000.remoteClick();
     this._updatePowerUI(true);
     if (this.power) {
-      this.liveSchedule.resume();
+      this.player.play();
       this._showBanner(this.currentChannel());
     } else {
-      this.liveSchedule.suspend();
+      this.player.pause();
     }
   }
 
@@ -195,32 +194,6 @@ class RemoteControl {
       }
       screen.classList.add("tv-screen--off");
     }
-  }
-
-  selectChannel(index) {
-    const alreadyCurrent = index === this.currentIndex;
-    this.currentIndex = index;
-    const channel = this.currentChannel();
-    Storage.setLastChannel(channel.number);
-
-    if (alreadyCurrent) {
-      // déjà affichée ici : un clic dessus sert à (re)diffuser cette chaîne
-      // à tout le monde (utile pour amorcer la diffusion partagée la toute
-      // première fois, ou si Firebase a raté une mise à jour)
-      if (this.sharedChannel.available) this._publishChannelWhenReady(channel);
-      return;
-    }
-
-    Audio2000.remoteClick();
-    const staticEl = this.dom.staticOverlay;
-    staticEl.hidden = false;
-    Audio2000.staticBurst(0.4);
-    setTimeout(() => {
-      staticEl.hidden = true;
-      this.liveSchedule.start(channel);
-      this._showBanner(channel);
-      if (this.sharedChannel.available) this._publishChannelWhenReady(channel);
-    }, 400);
   }
 
   _showBanner(channel) {
@@ -271,10 +244,15 @@ class RemoteControl {
 
     d.settingsToggle.addEventListener("click", () => {
       Audio2000.hoverBlip();
+      const opening = d.settingsModal.hidden;
       d.settingsModal.hidden = !d.settingsModal.hidden;
-      if (!d.settingsModal.hidden) this._openSettings();
+      if (opening) this._openSettings();
+      else this._teardownAdminPlayer();
     });
-    d.settingsClose.addEventListener("click", () => (d.settingsModal.hidden = true));
+    d.settingsClose.addEventListener("click", () => {
+      d.settingsModal.hidden = true;
+      this._teardownAdminPlayer();
+    });
 
     d.settingsAuthForm.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -300,26 +278,6 @@ class RemoteControl {
       d.settingsForm.reset();
       this._renderChannelList();
     });
-
-    d.adminPause.addEventListener("click", () => {
-      Audio2000.remoteClick();
-      this.liveSchedule.pauseLocal();
-      this._renderLiveStatus();
-    });
-    d.adminNext.addEventListener("click", () => {
-      Audio2000.remoteClick();
-      this.liveSchedule.skipNext();
-      this._renderLiveStatus();
-    });
-    d.adminLive.addEventListener("click", () => {
-      Audio2000.remoteClick();
-      this.liveSchedule.resumeLive();
-      this._renderLiveStatus();
-    });
-    d.adminSkipAd.addEventListener("click", () => {
-      Audio2000.remoteClick();
-      this.liveSchedule.reloadCurrent();
-    });
   }
 
   _openSettings() {
@@ -336,12 +294,37 @@ class RemoteControl {
   _showSettingsBody() {
     this.dom.settingsAuth.hidden = true;
     this.dom.settingsBody.hidden = false;
+    if (!this.adminPlayer) {
+      this.adminPlayer = new AdminPlayer({ elementId: "admin-player", sharedChannel: this.sharedChannel });
+      this.adminSelectedIndex = this.currentIndex;
+      this.adminPlayer.load(this.currentChannel());
+    }
     this._renderChannelList();
     this._renderLiveStatus();
   }
 
+  _teardownAdminPlayer() {
+    if (this.adminPlayer) {
+      this.adminPlayer.destroy();
+      this.adminPlayer = null;
+    }
+  }
+
   _renderLiveStatus() {
-    this.dom.liveStatus.textContent = this.liveSchedule.live ? "🔴 En direct" : "⏸ En pause (local)";
+    if (!this.sharedChannel.available) {
+      this.dom.liveStatus.textContent = "🔴 Chaîne par défaut (pas de synchro entre appareils, Firebase non configuré)";
+    } else {
+      this.dom.liveStatus.textContent = this.liveSchedule.paused ? "⏸ En pause" : "🔴 En direct";
+    }
+  }
+
+  /** Choisir une chaîne dans les réglages charge le lecteur studio (admin), pas directement le salon. */
+  selectChannel(index) {
+    this.adminSelectedIndex = index;
+    const channel = this.channels[index];
+    Storage.setLastChannel(channel.number);
+    if (this.adminPlayer) this.adminPlayer.load(channel);
+    this._renderChannelList();
   }
 
   _renderChannelList() {
@@ -355,12 +338,8 @@ class RemoteControl {
       btn.type = "button";
       btn.className = "settings-item__select";
       btn.textContent = channel.name;
-      if (index === this.currentIndex) btn.classList.add("settings-item__select--current");
-      btn.addEventListener("click", () => {
-        this.selectChannel(index);
-        this._renderChannelList();
-        this._renderLiveStatus();
-      });
+      if (index === this.adminSelectedIndex) btn.classList.add("settings-item__select--current");
+      btn.addEventListener("click", () => this.selectChannel(index));
       li.appendChild(btn);
 
       if (channel.isCustom) {
@@ -371,12 +350,9 @@ class RemoteControl {
         del.addEventListener("click", () => {
           Storage.removeCustomChannel(channel.number);
           this.channels = Storage.getAllChannels();
-          if (this.currentIndex >= this.channels.length) {
-            this.currentIndex = 0;
-            const fallback = this.currentChannel();
-            Storage.setLastChannel(fallback.number);
-            this.liveSchedule.start(fallback);
-            if (this.sharedChannel.available) this._publishChannelWhenReady(fallback);
+          if (this.adminSelectedIndex >= this.channels.length) {
+            this.adminSelectedIndex = 0;
+            if (this.adminPlayer) this.adminPlayer.load(this.channels[0]);
           }
           this._renderChannelList();
         });
@@ -400,10 +376,17 @@ class RemoteControl {
     this.dom.guideOverlay.hidden = false;
     this.dom.guideNow.textContent = "Chargement...";
     this.dom.guideNext.textContent = "Chargement...";
-    const { nowId, nextId } = this.liveSchedule.getNowAndNextIds();
-    const [nowTitle, nextTitle] = await Promise.all([fetchVideoTitle(nowId), fetchVideoTitle(nextId)]);
-    this.dom.guideNow.textContent = nowTitle;
-    this.dom.guideNext.textContent = nextTitle;
+
+    const ids = this.player.getPlaylistIds();
+    const idx = this.player.getPlaylistIndex();
+    const liveTitle = this.player.getVideoTitle();
+
+    this.dom.guideNow.textContent = liveTitle || "?";
+    if (ids && ids.length && idx != null && idx >= 0) {
+      this.dom.guideNext.textContent = await fetchVideoTitle(ids[(idx + 1) % ids.length]);
+    } else {
+      this.dom.guideNext.textContent = "?";
+    }
   }
 }
 
