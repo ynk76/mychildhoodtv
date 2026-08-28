@@ -276,8 +276,8 @@ class RemoteControl {
 
   _renderVolume() {
     this.dom.mute.setAttribute("aria-pressed", String(this.muted));
-    this.dom.volumeBar.style.width = (this.muted ? 0 : this.volume) + "%";
-    this.dom.volumeLabel.textContent = this.muted ? "MUET" : `VOL ${this.volume}`;
+    const level = this.muted ? 0 : Math.ceil((this.volume / 100) * this.dom.volumeLeds.length);
+    this.dom.volumeLeds.forEach((led, i) => led.classList.toggle("on", i < level));
   }
 
   /* ---------------------------------------------------------------- */

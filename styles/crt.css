@@ -192,39 +192,11 @@
 
 /* ---------------------------------------------------------------------- */
 /* Mode cinéma plein écran (double-clic sur l'écran, ou bouton télécommande) */
+/* Le décor se cache (voir .room.cinema-mode > *:not(.tv-unit) dans           */
+/* main.css) et c'est le stage tout entier qui zoome sur la télé — voir      */
+/* RemoteControl._fitStage dans scripts/remote.js — donc rien ici n'a plus   */
+/* besoin de sortir .tv-unit du flux normal.                                */
 /* ---------------------------------------------------------------------- */
-
-.cinema-mode .wallpaper,
-.cinema-mode .window,
-.cinema-mode .side-table,
-.cinema-mode .shelf,
-.cinema-mode .plant,
-.cinema-mode .media-console,
-.cinema-mode .rug,
-.cinema-mode .sofa,
-.cinema-mode .room-cat {
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-.cinema-mode .tv-unit {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(94vw, 125vh);
-  z-index: 1000;
-}
-.cinema-mode .tv-legs,
-.cinema-mode .tv-settings-btn,
-.cinema-mode .tv-stand {
-  display: none;
-}
-.cinema-mode .tv-set__frame {
-  border-radius: 10px;
-  padding: 1.5%;
-}
 
 /* ---------------------------------------------------------------------- */
 /* Focus visible global (accessibilité clavier)                            */

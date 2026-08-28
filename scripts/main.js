@@ -33,25 +33,70 @@ function initAmbientMuteButton() {
   let muted = Storage.getAmbientMuted();
   Audio2000.setAmbientMuted(muted);
   btn.setAttribute("aria-pressed", String(muted));
-  btn.textContent = muted ? "🔇 Ambiance" : "🔊 Ambiance";
+  btn.title = "Ambiance sonore";
+  btn.textContent = muted ? "AMB ✕" : "AMB ♪";
   btn.addEventListener("click", () => {
     muted = !muted;
     Storage.setAmbientMuted(muted);
     Audio2000.setAmbientMuted(muted);
     btn.setAttribute("aria-pressed", String(muted));
-    btn.textContent = muted ? "🔇 Ambiance" : "🔊 Ambiance";
+    btn.textContent = muted ? "AMB ✕" : "AMB ♪";
   });
 }
 
 /**
- * Mode cinéma plein écran : double-clic sur l'écran, ou bouton dédié sur la
- * télécommande. Sur mobile en portrait, ce mode masque aussi toutes les
- * commandes (télécommande, tchat...) et pivote l'écran en grand format
- * paysage à regarder en tournant le téléphone à l'horizontale — dans ce
- * cas, seul le bouton "cinema-exit" (à l'intérieur de l'écran, pivote avec
- * lui) permet de revenir en arrière (voir styles/main.css).
+ * Le décor est un canevas de taille fixe (1280x740 desktop, 390x780 mobile,
+ * voir styles/main.css) mis à l'échelle EN BLOC par transform sur .stage,
+ * plutôt que "fluidifié" en % — c'est ce qui garde les proportions de la
+ * maquette identiques à toutes les tailles d'écran. En mode cinéma, on
+ * réutilise le même mécanisme en ciblant le rectangle de la télé (lu via
+ * offsetLeft/Top/Width/Height, insensibles au transform déjà en place) au
+ * lieu du salon entier.
  */
-function initCinemaMode() {
+function initStageScale() {
+  const stage = document.getElementById("room-stage");
+  const room = document.getElementById("room");
+  const tvUnit = document.querySelector(".tv-unit");
+  if (!stage || !room) return () => {};
+
+  const SIZE = { desktop: [1280, 740], mobile: [390, 780] };
+  const isMobile = () => window.innerWidth <= 760;
+
+  function fit() {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    let s, tx, ty;
+
+    if (room.classList.contains("cinema-mode") && tvUnit) {
+      const tl = tvUnit.offsetLeft;
+      const tt = tvUnit.offsetTop;
+      const tw = tvUnit.offsetWidth;
+      const th = tvUnit.offsetHeight;
+      s = Math.min(vw / tw, vh / th) * 0.94;
+      tx = vw / 2 - s * (tl + tw / 2);
+      ty = vh / 2 - s * (tt + th / 2);
+    } else {
+      const [w, h] = isMobile() ? SIZE.mobile : SIZE.desktop;
+      s = Math.min(vw / w, vh / h);
+      tx = (vw - s * w) / 2;
+      ty = (vh - s * h) / 2;
+    }
+
+    stage.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+  }
+
+  window.addEventListener("resize", fit);
+  fit();
+  return fit;
+}
+
+/**
+ * Mode cinéma plein écran : double-clic sur l'écran, ou bouton dédié sur la
+ * télécommande. Le reste du décor s'efface (voir
+ * .room.cinema-mode > *:not(.tv-unit) dans styles/main.css) et le stage
+ * zoome sur la télé via fitStage() ci-dessus.
+ */
+function initCinemaMode(fitStage) {
   const screen = document.getElementById("tv-screen");
   const room = document.getElementById("room");
   const exitBtn = document.getElementById("cinema-exit");
@@ -59,10 +104,12 @@ function initCinemaMode() {
 
   function disable() {
     room.classList.remove("cinema-mode");
+    fitStage();
   }
 
   function toggle() {
     room.classList.toggle("cinema-mode");
+    fitStage();
   }
 
   screen.addEventListener("dblclick", toggle);
@@ -77,7 +124,8 @@ function initCinemaMode() {
 function initApp() {
   window.initDecor();
   initAmbientMuteButton();
-  const toggleCinema = initCinemaMode();
+  const fitStage = initStageScale();
+  const toggleCinema = initCinemaMode(fitStage);
 
   const remote = new RemoteControl({
     power: document.getElementById("btn-power"),
@@ -85,8 +133,7 @@ function initApp() {
     volDown: document.getElementById("btn-vol-down"),
     mute: document.getElementById("btn-mute"),
     fullscreen: document.getElementById("btn-fullscreen"),
-    volumeBar: document.getElementById("volume-bar"),
-    volumeLabel: document.getElementById("volume-label"),
+    volumeLeds: Array.from(document.querySelectorAll(".remote__led[data-vol]")),
     screen: document.getElementById("tv-screen"),
     powerOff: document.getElementById("power-off-overlay"),
     staticOverlay: document.getElementById("static-overlay"),

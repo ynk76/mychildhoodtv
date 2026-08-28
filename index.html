@@ -21,166 +21,248 @@
 
 <a class="skip-link" href="#remote-control">Aller directement à la télécommande</a>
 
-<main id="room" class="room room--day">
+<!--
+  Le salon est dessiné sur un canevas de taille FIXE (1280x740 desktop,
+  390x780 mobile — comme la maquette) puis mis à l'échelle en bloc par
+  transform:scale() (voir scripts/main.js, initStageScale()) : on ne
+  "fluidifie" pas la mise en page en %, on la reproduit au pixel près.
+  Le mode cinéma réutilise le même mécanisme : au lieu de centrer tout le
+  salon, on zoome sur le rectangle exact de la télé.
+-->
+<div id="viewport">
+  <div class="stage" id="room-stage">
+    <main id="room" class="room" data-scene="salon" data-mode="day" data-power="on">
 
-  <div class="wallpaper" aria-hidden="true"></div>
+      <div class="wallpaper" aria-hidden="true"></div>
+      <div class="wall-shade" aria-hidden="true"></div>
+      <div class="rail" aria-hidden="true"></div>
+      <div class="floor" aria-hidden="true"></div>
+      <div class="baseboard" aria-hidden="true"></div>
 
-  <div class="window" aria-hidden="true">
-    <div class="window__sky">
-      <div class="weather-sun"></div>
-      <div class="weather-moon"></div>
-      <div class="weather-cloud weather-cloud--1"></div>
-      <div class="weather-cloud weather-cloud--2"></div>
-      <div class="weather-rain"></div>
-      <div class="weather-star star--1"></div>
-      <div class="weather-star star--2"></div>
-      <div class="weather-star star--3"></div>
-      <div class="weather-star star--4"></div>
-    </div>
-    <div class="window__cross window__cross--v"></div>
-    <div class="window__cross window__cross--h"></div>
-    <div class="window__frame"></div>
-    <div class="curtain curtain--left"></div>
-    <div class="curtain curtain--right"></div>
-  </div>
-
-  <div class="shelf shelf--left" aria-hidden="true">
-    <div class="frame frame--1">
-      <div class="frame__photo">
-        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="#f6ecdc"/><circle cx="50" cy="62" r="22" fill="#dba99b"/><path d="M0 78 Q25 62 50 78 T100 78 V100 H0 Z" fill="#93a89b"/></svg>
-      </div>
-    </div>
-    <div class="frame frame--2">
-      <div class="frame__photo">
-        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="#a3c6d1"/><rect x="30" y="55" width="40" height="30" fill="#dba99b"/><path d="M30 55 L50 35 L70 55 Z" fill="#e8cca9"/><rect x="44" y="30" width="6" height="10" fill="#c58f85"/><circle cx="20" cy="80" r="6" fill="#c58f85"/><circle cx="80" cy="82" r="6" fill="#93a89b"/></svg>
-      </div>
-    </div>
-    <div id="tv-guide-item" class="tv-guide-item" tabindex="0" role="button" aria-label="Programme télé : voir ce qui passe en ce moment et ensuite">
-      <span class="tv-guide-item__label">TV</span>
-      <span class="tv-guide-item__line"></span>
-      <span class="tv-guide-item__line"></span>
-    </div>
-    <div class="vhs-stack">
-      <div class="vhs vhs--1"></div>
-      <div class="vhs vhs--2"></div>
-      <div class="vhs vhs--3"></div>
-    </div>
-  </div>
-
-  <div class="shelf shelf--right" aria-hidden="true">
-    <div class="frame frame--3">
-      <div class="frame__photo">
-        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="#f6ecdc"/><circle cx="50" cy="55" r="28" fill="#dcc5a6"/><circle cx="40" cy="48" r="4" fill="#4d3b38"/><circle cx="60" cy="48" r="4" fill="#4d3b38"/><path d="M38 65 Q50 75 62 65" stroke="#4d3b38" stroke-width="3" fill="none"/><path d="M50 27 L45 15 M50 27 L55 15" stroke="#4d3b38" stroke-width="3"/></svg>
-      </div>
-    </div>
-    <div id="lava-lamp" class="lava-lamp" tabindex="0" role="button" aria-label="Lampe à lave, cliquer pour l'animer">
-      <div class="lava-lamp__glass">
-        <div class="lava-lamp__blob b1"></div>
-        <div class="lava-lamp__blob b2"></div>
-        <div class="lava-lamp__blob b3"></div>
-      </div>
-      <div class="lava-lamp__neck"></div>
-      <div class="lava-lamp__base"></div>
-    </div>
-  </div>
-
-  <div class="plant" aria-hidden="true">
-    <div class="plant__pot"></div>
-    <div class="plant__leaf l1"></div>
-    <div class="plant__leaf l2"></div>
-    <div class="plant__leaf l3"></div>
-    <div class="plant__leaf l4"></div>
-  </div>
-
-  <div class="tv-unit">
-    <div class="tv-frame-rotator">
-      <div class="tv-set">
-        <div class="tv-set__frame">
-          <div class="tv-set__body">
-            <div id="tv-screen" class="tv-screen">
-              <div id="player" class="tv-player"></div>
-              <canvas id="screensaver-canvas" class="screensaver-canvas"></canvas>
-              <div id="screensaver-overlay" class="screensaver-overlay" hidden aria-hidden="true"></div>
-              <div id="static-overlay" class="static-overlay" hidden aria-hidden="true"></div>
-              <div id="channel-banner" class="channel-banner">
-                <span class="channel-banner__live">🔴 EN DIRECT</span>
-                <span id="channel-banner-name" class="channel-banner__name"></span>
-              </div>
-              <div id="power-off-overlay" class="power-off-overlay" hidden aria-hidden="true">
-                <div class="power-off-overlay__scan"></div>
-              </div>
-              <div id="minigame-overlay" class="minigame-overlay" hidden>
-                <p class="minigame-overlay__hint">📺 Pub en cours — petite pause jeu !</p>
-                <div id="minigame-mount" class="minigame-overlay__mount"></div>
-              </div>
-            </div>
-            <div class="tv-set__panel" aria-hidden="true">
-              <div class="tv-set__knob"></div>
-              <div class="tv-set__vents"></div>
-              <div class="tv-set__led"></div>
-            </div>
+      <div class="window" aria-hidden="true">
+        <div class="window__sky">
+          <div class="weather-sun"></div>
+          <div class="weather-moon"></div>
+          <div class="weather-star star--1"></div>
+          <div class="weather-star star--2"></div>
+          <div class="weather-star star--3"></div>
+          <div class="weather-star star--4"></div>
+          <div class="weather-star star--5"></div>
+          <div class="weather-star star--6"></div>
+          <div class="weather-cloud weather-cloud--1"><span></span><span></span><span></span></div>
+          <div class="weather-cloud weather-cloud--2"><span></span><span></span></div>
+          <div class="weather-rain">
+            <span></span><span></span><span></span><span></span><span></span>
           </div>
+          <div class="window__glare"></div>
+        </div>
+        <div class="window__cross window__cross--v"></div>
+        <div class="window__cross window__cross--h"></div>
+        <div class="window__frame"></div>
+        <div class="window__sill"></div>
+      </div>
+      <div class="curtain curtain--left"></div>
+      <div class="curtain curtain--right"></div>
+      <div class="curtain-rail" aria-hidden="true"></div>
+
+      <div class="shelf shelf--left" aria-hidden="true">
+        <div class="shelf__top"></div>
+        <div class="shelf__bracket shelf__bracket--l"></div>
+        <div class="shelf__bracket shelf__bracket--r"></div>
+        <div class="frame frame--1">
+          <div class="frame__photo"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="#f6ecdc"/><circle cx="50" cy="62" r="22" fill="#dba99b"/><path d="M0 78 Q25 62 50 78 T100 78 V100 H0 Z" fill="#93a89b"/></svg></div>
+        </div>
+        <div class="frame frame--2">
+          <div class="frame__photo"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="#a3c6d1"/><rect x="30" y="55" width="40" height="30" fill="#dba99b"/><path d="M30 55 L50 35 L70 55 Z" fill="#e8cca9"/><rect x="44" y="30" width="6" height="10" fill="#c58f85"/><circle cx="20" cy="80" r="6" fill="#c58f85"/><circle cx="80" cy="82" r="6" fill="#93a89b"/></svg></div>
+        </div>
+        <div class="frame frame--3">
+          <div class="frame__photo"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><rect width="100" height="100" fill="#c9d5da"/><rect width="100" height="100" fill="url(#g1)"/><defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9d5da"/><stop offset="1" stop-color="#e5dcc8"/></linearGradient></defs></svg></div>
+        </div>
+        <div class="vhs-stack">
+          <div class="vhs vhs--1"></div>
+          <div class="vhs vhs--2"></div>
+          <div class="vhs vhs--3"></div>
+          <div class="vhs vhs--4"></div>
         </div>
       </div>
-      <div class="tv-legs" aria-hidden="true"></div>
-      <div class="tv-stand" aria-hidden="true">
-        <div class="tv-set__brand">MY CHILDHOOD TV</div>
+
+      <div class="shelf shelf--right" aria-hidden="true">
+        <div class="shelf__top"></div>
+        <div class="shelf__bracket shelf__bracket--l"></div>
+        <div class="shelf__bracket shelf__bracket--r"></div>
+        <div id="lava-lamp" class="lava-lamp" tabindex="0" role="button" aria-label="Lampe à lave, cliquer pour l'animer">
+          <div class="lava-lamp__cap"></div>
+          <div class="lava-lamp__neck"></div>
+          <div class="lava-lamp__glass">
+            <div class="lava-lamp__blob b1"></div>
+            <div class="lava-lamp__blob b2"></div>
+            <div class="lava-lamp__blob b3"></div>
+            <div class="lava-lamp__shine"></div>
+          </div>
+          <div class="lava-lamp__base"></div>
+          <div class="lava-lamp__glow"></div>
+        </div>
       </div>
-      <button id="cinema-exit" class="cinema-exit-btn" aria-label="Revenir à l'écran normal">✕</button>
-    </div>
-    <button id="settings-toggle" class="tv-settings-btn" aria-label="Réglages (protégés par mot de passe)">⚙</button>
-  </div>
 
-  <div class="side-table" aria-hidden="true">
-    <button id="bedside-lamp" class="bedside-lamp" aria-pressed="false" aria-label="Lampe de chevet : basculer entre jour et nuit">
-      <span class="bedside-lamp__glow"></span>
-      <span class="bedside-lamp__shade"></span>
-      <span class="bedside-lamp__neck"></span>
-      <span class="bedside-lamp__base"></span>
-    </button>
-    <div class="side-table__top"></div>
-    <div class="side-table__leg side-table__leg--l"></div>
-    <div class="side-table__leg side-table__leg--r"></div>
-  </div>
+      <div class="plant" aria-hidden="true">
+        <svg viewBox="0 0 104 170" width="104" height="170">
+          <g class="plant__leaves">
+            <path d="M52 118C46 96 30 84 14 80c8 20 20 34 38 42Z"/>
+            <path d="M52 118C58 92 76 80 94 78c-6 22-20 36-42 44Z"/>
+            <path d="M52 116C48 88 54 62 66 44c8 24 4 52-14 74Z"/>
+            <path d="M52 118C42 96 40 70 46 48c14 18 18 46 6 72Z" opacity=".85"/>
+          </g>
+          <path class="plant__pot" d="M22 118h60l-8 44a10 10 0 0 1-10 8H40a10 10 0 0 1-10-8Z"/>
+          <path class="plant__pot-rim" d="M18 112h68a6 6 0 0 1 6 6v6H12v-6a6 6 0 0 1 6-6Z"/>
+          <ellipse cx="52" cy="168" rx="34" ry="6" fill="rgba(0,0,0,.16)"/>
+        </svg>
+      </div>
 
-  <div class="media-console" aria-hidden="true">
-    <div class="vcr">
-      <div class="vcr__slot"></div>
+      <div class="rug" aria-hidden="true"></div>
+
+      <div class="sofa" aria-hidden="true">
+        <div class="sofa__back"></div>
+        <div class="sofa__arm sofa__arm--l"></div>
+        <div class="sofa__arm sofa__arm--r"></div>
+        <div class="sofa__seat"></div>
+        <div class="sofa__cushion c1"></div>
+        <div class="sofa__cushion c2"></div>
+        <div class="sofa__cushion c3"></div>
+        <div class="sofa__leg sofa__leg--l"></div>
+        <div class="sofa__leg sofa__leg--r"></div>
+        <div class="sofa__shadow"></div>
+      </div>
+
+      <!--
+        MEUBLE TV + TÉLÉVISEUR (un seul lecteur YouTube pour tout le site).
+        Structure "à plat" (tous les éléments positionnés en absolu par
+        rapport à .tv-unit), comme dans la maquette — pas d'imbrication.
+      -->
+      <div class="tv-unit">
+        <div class="tv-set__frame" aria-hidden="true"></div>
+        <div class="tv-set__frame-inner" aria-hidden="true"></div>
+        <div id="tv-screen" class="tv-screen">
+          <div id="player" class="tv-player"></div>
+          <canvas id="screensaver-canvas" class="screensaver-canvas"></canvas>
+          <div id="screensaver-overlay" class="screensaver-overlay" hidden aria-hidden="true"></div>
+          <div id="static-overlay" class="static-overlay" hidden aria-hidden="true"></div>
+          <div id="channel-banner" class="channel-banner">
+            <span class="channel-banner__live">🔴 EN DIRECT</span>
+            <span id="channel-banner-name" class="channel-banner__name"></span>
+          </div>
+          <div id="power-off-overlay" class="power-off-overlay" hidden aria-hidden="true">
+            <div class="power-off-overlay__scan"></div>
+          </div>
+          <div id="minigame-overlay" class="minigame-overlay" hidden>
+            <p class="minigame-overlay__hint">📺 Pub en cours — petite pause jeu !</p>
+            <div id="minigame-mount" class="minigame-overlay__mount"></div>
+          </div>
+        </div>
+        <div class="tv-set__panel" aria-hidden="true">
+          <div class="tv-set__knob"></div>
+          <button id="settings-toggle" class="tv-settings-btn" aria-label="Réglages (protégés par mot de passe)">⚙</button>
+          <div class="tv-set__vents"></div>
+          <div class="tv-set__led"></div>
+        </div>
+        <span class="tv-legs__foot tv-legs__foot--l" aria-hidden="true"></span>
+        <span class="tv-legs__foot tv-legs__foot--r" aria-hidden="true"></span>
+        <div class="tv-stand__top" aria-hidden="true"></div>
+        <div class="tv-stand" aria-hidden="true">
+          <div class="tv-stand__niche tv-stand__niche--a"></div>
+          <div class="tv-stand__niche tv-stand__niche--b"></div>
+          <div class="tv-set__brand">
+            <span class="tv-set__brand-line1">MY CHILDHOOD</span>
+            <span class="tv-set__brand-divider"></span>
+            <span class="tv-set__brand-line2">TV</span>
+          </div>
+        </div>
+        <div class="tv-stand__shadow" aria-hidden="true"></div>
+        <button id="cinema-exit" class="cinema-exit-btn" aria-label="Revenir à l'écran normal">✕</button>
+      </div>
+
+      <!-- Horloge et guide TV : posés à des coordonnées absolues précises
+           (dans le meuble média / sur l'étagère en desktop, dans les niches
+           du meuble TV en mobile) plutôt que nichés dans un parent qu'on
+           masquerait autrement en mobile. -->
       <div id="wall-clock" class="vcr__clock" tabindex="0" role="button" aria-label="Horloge du magnétoscope">
         <span class="vcr__clock-text">--:--</span>
       </div>
-    </div>
+      <div id="tv-guide-item" class="tv-guide-item" tabindex="0" role="button" aria-label="Programme télé : voir ce qui passe en ce moment et ensuite">
+        <span class="tv-guide-item__spine"></span>
+        <span class="tv-guide-item__line tv-guide-item__line--1"></span>
+        <span class="tv-guide-item__line tv-guide-item__line--2"></span>
+        <span class="tv-guide-item__line tv-guide-item__line--3"></span>
+        <span class="tv-guide-item__label">TV</span>
+      </div>
+
+      <div class="media-console" aria-hidden="true">
+        <div class="media-console__top"></div>
+        <div class="media-console__body"></div>
+        <div class="vcr">
+          <div class="vcr__slot"></div>
+          <div class="vcr__buttons"><span></span><span></span><span></span></div>
+        </div>
+        <div class="media-console__shadow"></div>
+      </div>
+
+      <div id="room-cat" class="room-cat" tabindex="0" role="button" aria-label="Chat du salon, cliquer pour le réveiller">
+        <svg class="room-cat__svg room-cat__asleep" viewBox="0 0 150 84" aria-hidden="true">
+          <ellipse cx="76" cy="79" rx="52" ry="5" fill="rgba(0,0,0,.18)"/>
+          <path class="room-cat__body" d="M28 74c-6-18 10-30 44-30 30 0 52 8 52 20 0 8-8 12-22 12Z"/>
+          <path class="room-cat__tail" d="M28 74c-14 0-24-4-24-8 8 0 14-4 16-10 4 8 10 14 20 16Z"/>
+          <circle class="room-cat__head" cx="112" cy="52" r="19"/>
+          <path class="room-cat__ears" d="M98 40l-4-13 13 7Zm28 0 4-13-13 7Z"/>
+          <path d="M104 52h9M117 52h8" stroke="#ffe0a8" stroke-width="2.4" stroke-linecap="round" opacity=".8"/>
+          <path d="M110 58h5l-2.5 3Z" fill="#e0a08c"/>
+        </svg>
+        <svg class="room-cat__svg room-cat__awake" viewBox="0 0 150 84" aria-hidden="true">
+          <ellipse cx="76" cy="79" rx="52" ry="5" fill="rgba(0,0,0,.18)"/>
+          <path class="room-cat__body" d="M112 76c-4 0 6-16 4-26-2-12-14-18-30-18-18 0-32 8-32 22 0 10 4 18 8 22Z"/>
+          <path class="room-cat__tail" d="M50 76c-16 0-30-4-38-8 10-2 18-8 20-16 6 6 16 8 26 8Z"/>
+          <circle class="room-cat__head" cx="104" cy="36" r="21"/>
+          <path class="room-cat__ears" d="M88 22l-4-14 14 8Zm32 0 4-14-14 8Z"/>
+          <circle cx="97" cy="34" r="3.4" fill="#ffe0a8"/><circle cx="112" cy="34" r="3.4" fill="#ffe0a8"/>
+          <path d="M103 42h6l-3 4Z" fill="#e0a08c"/>
+        </svg>
+      </div>
+
+      <div class="side-table" aria-hidden="true">
+        <button id="bedside-lamp" class="bedside-lamp" aria-pressed="false" aria-label="Lampe de chevet : basculer entre jour et nuit">
+          <span class="bedside-lamp__shade"></span>
+          <span class="bedside-lamp__neck"></span>
+          <span class="bedside-lamp__base"></span>
+          <span class="bedside-lamp__bulb"></span>
+          <span class="bedside-lamp__glow"></span>
+        </button>
+        <div class="side-table__top"></div>
+        <div class="side-table__body"></div>
+      </div>
+
+      <section id="remote-control" class="remote" role="group" aria-label="Télécommande">
+        <div class="remote__header">
+          <span class="remote__title">TÉLÉCOMMANDE</span>
+          <div class="remote__leds">
+            <span class="remote__led" data-vol="1"></span>
+            <span class="remote__led" data-vol="2"></span>
+            <span class="remote__led" data-vol="3"></span>
+            <span class="remote__led" data-vol="4"></span>
+          </div>
+        </div>
+        <div class="remote__row">
+          <button id="btn-power" class="remote-btn remote-btn--power" aria-label="Marche / Arrêt" aria-pressed="true">⏻</button>
+          <button id="btn-vol-down" class="remote-btn" aria-label="Baisser le volume">−</button>
+          <button id="btn-vol-up" class="remote-btn" aria-label="Augmenter le volume">+</button>
+          <button id="btn-mute" class="remote-btn" aria-label="Couper le son" aria-pressed="false">🔇</button>
+          <button id="btn-fullscreen" class="remote-btn" aria-label="Plein écran cinéma">⛶</button>
+          <button id="ambient-mute" class="remote-btn remote-btn--ambient" aria-pressed="false">AMB ♪</button>
+        </div>
+      </section>
+
+      <button id="chat-toggle" class="chat-toggle" aria-label="Ouvrir le tchat">💬<span>Tchat</span></button>
+
+    </main>
   </div>
-
-  <div class="rug" aria-hidden="true"></div>
-
-  <div class="sofa" aria-hidden="true">
-    <div class="sofa__cushion c1"></div>
-    <div class="sofa__cushion c2"></div>
-    <div class="sofa__cushion c3"></div>
-  </div>
-
-  <div id="room-cat" class="room-cat" tabindex="0" role="button" aria-label="Chat du salon, cliquer pour le réveiller">
-    <svg class="room-cat__svg room-cat__asleep" viewBox="0 0 150 84" width="90" height="50" aria-hidden="true">
-      <path d="M28 74c-6-18 10-30 44-30 30 0 52 8 52 20 0 8-8 12-22 12Z" fill="#2f2a3c"/>
-      <path d="M28 74c-14 0-24-4-24-8 8 0 14-4 16-10 4 8 10 14 20 16Z" fill="#2f2a3c"/>
-      <circle cx="112" cy="52" r="19" fill="#332e42"/>
-      <path d="M98 40l-4-13 13 7Zm28 0 4-13-13 7Z" fill="#332e42"/>
-      <path d="M104 52h9M117 52h8" stroke="#ffe0a8" stroke-width="2.4" stroke-linecap="round" opacity=".8"/>
-      <path d="M110 58h5l-2.5 3Z" fill="#e0a08c"/>
-    </svg>
-    <svg class="room-cat__svg room-cat__awake" viewBox="0 0 150 84" width="90" height="50" aria-hidden="true">
-      <path d="M112 76c-4 0 6-16 4-26-2-12-14-18-30-18-18 0-32 8-32 22 0 10 4 18 8 22Z" fill="#2f2a3c"/>
-      <path d="M50 76c-16 0-30-4-38-8 10-2 18-8 20-16 6 6 16 8 26 8Z" fill="#2f2a3c"/>
-      <circle cx="104" cy="36" r="21" fill="#332e42"/>
-      <path d="M88 22l-4-14 14 8Zm32 0 4-14-14 8Z" fill="#332e42"/>
-      <circle cx="97" cy="34" r="3.4" fill="#ffe0a8"/>
-      <circle cx="112" cy="34" r="3.4" fill="#ffe0a8"/>
-      <path d="M103 42h6l-3 4Z" fill="#e0a08c"/>
-    </svg>
-  </div>
-
-</main>
+</div>
 
 <div id="guide-overlay" class="settings-modal" hidden>
   <div class="settings-panel" role="dialog" aria-modal="true" aria-label="Programme télé">
@@ -233,25 +315,6 @@
   </div>
 </div>
 
-<section id="remote-control" class="remote" role="group" aria-label="Télécommande">
-  <div class="remote-row remote-row--top">
-    <button id="btn-power" class="remote-btn remote-btn--power" aria-label="Marche / Arrêt" aria-pressed="true">⏻</button>
-    <button id="ambient-mute" class="remote-btn remote-btn--ambient" aria-pressed="false">🔊 Ambiance</button>
-  </div>
-  <div class="remote-row">
-    <span class="remote-label">VOLUME</span>
-    <button id="btn-vol-down" class="remote-btn" aria-label="Baisser le volume">−</button>
-    <div class="volume-meter"><div id="volume-bar" class="volume-meter__bar"></div></div>
-    <button id="btn-vol-up" class="remote-btn" aria-label="Augmenter le volume">+</button>
-  </div>
-  <div id="volume-label" class="volume-label">VOL 60</div>
-  <div class="remote-row">
-    <button id="btn-mute" class="remote-btn" aria-label="Couper le son" aria-pressed="false">🔇 Muet</button>
-    <button id="btn-fullscreen" class="remote-btn" aria-label="Plein écran cinéma">⛶ Écran</button>
-  </div>
-</section>
-
-<button id="chat-toggle" class="chat-toggle" aria-label="Ouvrir le tchat">💬<span>Tchat</span></button>
 <div id="chat-panel" class="chat-panel" hidden>
   <div class="panel-header">
     <h2>💬 Tchat</h2>

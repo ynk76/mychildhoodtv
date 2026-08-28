@@ -37,28 +37,35 @@ function initClock() {
   });
 }
 
-/** Le chat, gros, noir et paresseux : il se balade rarement et lentement. */
+/** Le chat, gros, noir et paresseux : il se balade rarement et lentement.
+ * Coordonnées en px absolus dans le canevas #room (1280x740 desktop,
+ * 390x780 mobile) — le décor n'est plus fluide, voir styles/main.css. */
 function initWanderingCat() {
   const cat = document.getElementById("room-cat");
   if (!cat) return;
 
-  const spots = [
-    { top: "82%", left: "38%" }, // sur le tapis
-    { top: "82%", left: "60%" }, // sur le tapis, côté opposé
-    { top: "68%", left: "22%" }, // au pied du canapé
-    { top: "56%", left: "10%" }, // près de la plante
-    { top: "86%", left: "50%" }, // devant la télé
+  const DESKTOP_SPOTS = [
+    { top: 636, left: 790 }, // sur le tapis
+    { top: 648, left: 430 }, // sur le tapis, côté opposé
+    { top: 630, left: 250 }, // au pied du canapé
   ];
+  const MOBILE_SPOTS = [
+    { top: 142, left: 232 }, // endormi sur la télé, côté droit
+    { top: 142, left: 96 }, // endormi sur la télé, côté gauche
+  ];
+  const isMobile = () => window.innerWidth <= 760;
+
   let currentSpot = -1;
   let awake = false;
 
   function moveTo(index) {
     currentSpot = index;
-    const spot = spots[index];
+    const spots = isMobile() ? MOBILE_SPOTS : DESKTOP_SPOTS;
+    const spot = spots[index % spots.length];
     cat.classList.add("cat--walking");
     cat.classList.remove("cat--lying");
-    cat.style.top = spot.top;
-    cat.style.left = spot.left;
+    cat.style.top = spot.top + "px";
+    cat.style.left = spot.left + "px";
     clearTimeout(cat._arriveTimer);
     cat._arriveTimer = setTimeout(() => {
       cat.classList.remove("cat--walking");
@@ -71,6 +78,7 @@ function initWanderingCat() {
     // paresseux : une seule fois toutes les 45 à 90 secondes
     cat._wanderTimer = setTimeout(() => {
       if (!awake) {
+        const spots = isMobile() ? MOBILE_SPOTS : DESKTOP_SPOTS;
         let next = Math.floor(Math.random() * spots.length);
         if (next === currentSpot) next = (next + 1) % spots.length;
         moveTo(next);
@@ -79,7 +87,7 @@ function initWanderingCat() {
     }, 45000 + Math.random() * 45000);
   }
 
-  moveTo(Math.floor(Math.random() * spots.length));
+  moveTo(Math.floor(Math.random() * (isMobile() ? MOBILE_SPOTS.length : DESKTOP_SPOTS.length)));
   scheduleNextMove();
 
   cat.addEventListener("click", () => {
@@ -101,7 +109,7 @@ function initDayNight() {
   if (!toggle || !room) return;
 
   function apply(isNight) {
-    room.classList.toggle("room--night", isNight);
+    room.setAttribute("data-mode", isNight ? "night" : "day");
     Storage.setNightMode(isNight);
     toggle.setAttribute("aria-pressed", String(isNight));
   }
@@ -111,26 +119,9 @@ function initDayNight() {
   apply(initial);
 
   toggle.addEventListener("click", () => {
-    apply(!room.classList.contains("room--night"));
+    apply(room.getAttribute("data-mode") !== "night");
     Audio2000.hoverBlip();
   });
-}
-
-/** Météo derrière la fenêtre : change de temps de temps en temps le jour, étoilé la nuit. */
-function initWeather() {
-  const window_ = document.querySelector(".window");
-  const room = document.getElementById("room");
-  if (!window_ || !room) return;
-
-  const states = ["sunny", "cloudy", "rainy"];
-
-  function pick() {
-    const next = states[Math.floor(Math.random() * states.length)];
-    window_.dataset.weather = next;
-  }
-
-  pick();
-  setInterval(pick, 3 * 60 * 1000 + Math.random() * 90000);
 }
 
 window.initDecor = function initDecor() {
@@ -138,5 +129,4 @@ window.initDecor = function initDecor() {
   initClock();
   initWanderingCat();
   initDayNight();
-  initWeather();
 };
