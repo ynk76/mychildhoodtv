@@ -36,6 +36,13 @@
   --tvb2: #c0a887;
   --tvb3: #a68e70;
   --metal: #d9cbb6;
+  --frame: #e7d6c2;
+  --frame2: #cbb49c;
+  --sky1: #a3c6d1;
+  --sky2: #e2e9dc;
+  --curtain: #dba99b;
+  --curtain2: #c58f85;
+  --soft: #7b6360;
   --font-display: "Baloo 2", "Nunito", sans-serif;
   --font-body: "Nunito", system-ui, sans-serif;
   --font-mono: "VT323", monospace;
@@ -70,6 +77,13 @@
   --tvb2: #75655f;
   --tvb3: #5d4f4b;
   --metal: #8e8275;
+  --frame: #6a5c6e;
+  --frame2: #4a3f52;
+  --sky1: #141d38;
+  --sky2: #2b3159;
+  --curtain: #6c5772;
+  --curtain2: #55455d;
+  --soft: #c9b6ad;
 }
 
 * {
@@ -135,18 +149,18 @@ button {
   z-index: 1;
 }
 
-/* Window */
+/* Window — à gauche (comme dans la maquette), pas à droite */
 .window {
   position: absolute;
-  top: 6%;
-  right: 8%;
-  width: 18%;
+  top: 7%;
+  left: 3%;
+  width: 17%;
   min-width: 140px;
-  height: 30%;
+  height: 34%;
   z-index: 2;
-  border: 10px solid var(--wood-dark);
-  border-radius: 8px;
-  box-shadow: 0 6px 0 var(--ink);
+  border: 10px solid var(--frame, var(--wood-light));
+  border-radius: 16px 16px 10px 10px;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.12);
 }
 .window__sky {
   position: absolute;
@@ -315,26 +329,47 @@ button {
 }
 .curtain {
   position: absolute;
-  top: -6%;
-  width: 30%;
-  height: 112%;
-  background: repeating-linear-gradient(90deg, var(--burgundy), var(--burgundy) 10px, #e05a6a 10px, #e05a6a 20px);
-  border: var(--outline);
-  border-radius: 0 0 40% 40%;
+  top: -7%;
+  width: 34%;
+  height: 120%;
+  transform-origin: top center;
+  background: repeating-linear-gradient(97deg, var(--curtain, var(--burgundy)) 0 10px, var(--curtain2, #c58f85) 10px 19px);
+  border-radius: 0 40px 26px 8px;
+  animation: curtain-sway 9s ease-in-out infinite;
 }
 .curtain--left {
-  left: -14%;
+  left: -16%;
 }
 .curtain--right {
-  right: -14%;
-  transform: scaleX(-1);
+  right: -16%;
+  border-radius: 40px 0 8px 26px;
+  animation-name: curtain-sway-2;
+  animation-duration: 11s;
+}
+@keyframes curtain-sway {
+  0%,
+  100% {
+    transform: skewX(0deg);
+  }
+  50% {
+    transform: skewX(1.4deg);
+  }
+}
+@keyframes curtain-sway-2 {
+  0%,
+  100% {
+    transform: skewX(0deg);
+  }
+  50% {
+    transform: skewX(-1.4deg);
+  }
 }
 
 /* Petite étagère + lampe de chevet (bascule jour/nuit) à côté de la télé */
 .side-table {
   position: absolute;
-  top: 56%;
-  right: 6%;
+  top: 45%;
+  left: 68%;
   width: 100px;
   height: 96px;
   z-index: 6;
@@ -456,11 +491,11 @@ button {
   z-index: 3;
 }
 .shelf--left {
-  left: 3%;
+  left: 26%;
 }
 .shelf--right {
-  right: 3%;
-  top: 40%;
+  right: 4%;
+  top: 12%;
 }
 
 .frame {
@@ -630,8 +665,8 @@ button {
 /* Plant */
 .plant {
   position: absolute;
-  bottom: 20%;
-  left: 2%;
+  top: 47%;
+  left: 29%;
   width: 100px;
   height: 180px;
   z-index: 4;
@@ -676,12 +711,12 @@ button {
 
 .tv-unit {
   position: absolute;
-  top: 9%;
-  left: 50%;
+  top: 27%;
+  left: 51%;
   transform: translateX(-50%);
   /* borné en largeur ET en hauteur (vh) pour garder une taille cohérente
-     quel que soit le format d'écran, et laisser de la place au canapé */
-  width: min(46vw, 60vh, 680px);
+     quel que soit le format d'écran */
+  width: min(32vw, 44vh, 480px);
   z-index: 5;
 }
 
@@ -697,21 +732,70 @@ button {
   box-shadow: 0 14px 26px rgba(0, 0, 0, 0.22), inset 0 2px 0 rgba(255, 255, 255, 0.35);
 }
 
-.tv-set__brand {
+.tv-set__body {
+  display: flex;
+  gap: 3%;
+  align-items: stretch;
+}
+
+/* Panneau latéral rétro (molette + réglages + grille de ventilation + LED),
+   à côté de l'écran — purement décoratif : le vrai bouton réglages
+   (#settings-toggle) reste hors de .tv-frame-rotator (voir plus bas), il
+   est juste positionné visuellement par-dessus la molette. */
+.tv-set__panel {
+  position: relative;
+  flex: 0 0 16%;
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--tvb), var(--tvb2));
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.08);
+}
+.tv-set__knob {
   position: absolute;
-  bottom: 3%;
-  right: 8%;
+  left: 50%;
+  top: 8%;
+  transform: translateX(-50%);
+  width: 60%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, var(--metal), var(--tvb3));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+.tv-set__vents {
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  top: 46%;
+  bottom: 10%;
+  border-radius: 8px;
+  background: repeating-linear-gradient(180deg, var(--tvb3) 0 3px, transparent 3px 7px);
+  opacity: 0.7;
+}
+.tv-set__led {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff8a5c;
+  box-shadow: 0 0 8px #ff8a5c;
+}
+
+.tv-set__brand {
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 0.55rem;
   letter-spacing: 3px;
+  text-align: right;
   color: rgba(0, 0, 0, 0.3);
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .tv-screen {
   position: relative;
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   aspect-ratio: 4 / 3;
   background: #000;
   border-radius: 8px;
@@ -737,18 +821,20 @@ button {
   pointer-events: none;
 }
 
+/* Positionné par-dessus la molette décorative de .tv-set__panel (voir plus
+   haut) : c'est le vrai bouton cliquable, .tv-set__knob n'est que du décor. */
 .tv-settings-btn {
   position: absolute;
-  top: -1.6em;
-  right: 6%;
-  width: 1.9em;
-  height: 1.9em;
+  top: 12%;
+  right: 6.5%;
+  width: 1.7em;
+  height: 1.7em;
   border-radius: 50%;
   background: radial-gradient(circle at 40% 35%, var(--metal), var(--tvb3));
   color: var(--tvb3);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
   border: none;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   transition: transform 0.18s ease;
 }
 .tv-settings-btn:hover {
@@ -756,10 +842,18 @@ button {
 }
 
 .tv-legs {
-  height: 22px;
-  margin: 0 12%;
+  height: 10px;
+  margin: 0 16%;
   background: var(--wood-dark);
-  border-radius: 0 0 8px 8px;
+}
+
+/* Meuble TV : la télé "pose" dessus, avec l'enseigne gravée */
+.tv-stand {
+  margin: 0 4%;
+  padding: 0.6em 1em;
+  border-radius: 6px 6px 12px 12px;
+  background: linear-gradient(180deg, var(--wood-mid), var(--wood-dark));
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
 /* Bouton "revenir à l'écran normal" : masqué par défaut, affiché seulement
@@ -785,19 +879,17 @@ button {
 /* Media console / VCR */
 .media-console {
   position: absolute;
-  top: 64%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(34vw, 500px);
+  top: 55%;
+  left: 82%;
+  width: min(16vw, 240px);
   z-index: 4;
 }
 .vcr {
   position: relative;
   height: 46px;
-  background: var(--wood-mid);
-  border: var(--outline);
-  border-radius: 6px;
-  box-shadow: 4px 4px 0 var(--ink);
+  background: linear-gradient(180deg, var(--tvb), var(--tvb2));
+  border-radius: 8px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3), inset 0 0 0 2px rgba(0, 0, 0, 0.08);
 }
 .vcr__slot {
   position: absolute;
@@ -845,26 +937,29 @@ button {
 /* Rug */
 .rug {
   position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(92vw, 1320px);
-  height: 26%;
-  background: var(--rug-color);
-  border: var(--outline);
-  border-radius: 22px;
+  top: 80%;
+  left: 32%;
+  width: 44%;
+  height: 20%;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    var(--rug-shadow) 0 30%,
+    var(--rug-color) 30% 62%,
+    var(--rug-shadow) 62% 72%,
+    var(--rug-color) 72%
+  );
+  border-radius: 50%;
   z-index: 2;
-  box-shadow: inset 0 0 0 6px var(--rug-shadow);
+  box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.1) inset;
 }
 
-/* Sofa (premier plan) */
+/* Sofa (à gauche, comme dans la maquette) */
 .sofa {
   position: absolute;
-  bottom: -4%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(78vw, 1100px);
-  height: 30%;
+  top: 53%;
+  left: 2%;
+  width: 27%;
+  height: 43%;
   z-index: 10;
 }
 .sofa::before {
@@ -1212,30 +1307,41 @@ button {
 
 .chat-toggle {
   position: fixed;
-  bottom: 1.2em;
-  left: 1.2em;
+  top: 1.4em;
+  right: 1.4em;
+  bottom: auto;
+  left: auto;
   z-index: 200;
-  background: linear-gradient(160deg, #4a4744, #2a2827);
-  color: var(--accent);
-  border: var(--outline);
-  border-radius: 12px;
-  padding: 0.6em 1em;
-  font-size: 1rem;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  width: 3.4em;
+  height: 3.4em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, var(--sofa-highlight), var(--curtain));
+  color: var(--ink);
+  border: none;
+  border-radius: 22px 22px 8px 22px;
+  padding: 0;
+  font-size: 1.3rem;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.26);
+}
+.chat-toggle span {
+  display: none;
 }
 
 .chat-panel {
   position: fixed;
-  bottom: 4.5em;
-  left: 1.2em;
+  top: 5.2em;
+  right: 1.4em;
+  bottom: auto;
+  left: auto;
   z-index: 201;
-  width: min(90vw, 320px);
+  width: min(90vw, 300px);
   background: var(--cream);
   color: var(--ink);
-  border: 4px solid var(--wood-dark);
-  border-radius: 10px;
+  border-radius: 18px;
   padding: 0.9em;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   gap: 0.5em;
@@ -1287,18 +1393,17 @@ button {
 
 .remote {
   position: fixed;
-  bottom: 1.2em;
-  right: 1.2em;
+  bottom: 3%;
+  right: 3%;
   z-index: 200;
-  width: 210px;
-  background: linear-gradient(160deg, #2c2a28, #171615);
-  border: var(--outline);
-  border-radius: 16px;
-  padding: 0.9em;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+  width: 240px;
+  background: linear-gradient(160deg, var(--tvb), var(--tvb2) 60%, var(--tvb3));
+  border-radius: 22px;
+  padding: 1em;
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.26), inset 0 2px 0 rgba(255, 255, 255, 0.35);
   display: flex;
   flex-direction: column;
-  gap: 0.5em;
+  gap: 0.6em;
 }
 
 .remote-row {
@@ -1310,37 +1415,47 @@ button {
   justify-content: space-between;
 }
 .remote-label {
-  font-size: 0.7rem;
-  color: #c9c2b8;
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: var(--soft, var(--ink));
   min-width: 4.2em;
   font-family: var(--font-display);
 }
 
 .remote-btn {
   flex: 1;
-  background: linear-gradient(160deg, #4a4744, #2a2827);
-  color: var(--accent);
-  border: 1px solid #000;
-  border-radius: 8px;
-  padding: 0.5em 0.3em;
+  background: linear-gradient(180deg, var(--cream), var(--sofa-highlight));
+  color: var(--ink);
+  border: none;
+  border-radius: 12px;
+  padding: 0.6em 0.3em;
   font-size: 1rem;
-  box-shadow: 0 2px 0 #000;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
+  transition: transform 0.12s ease;
+}
+.remote-btn:hover {
+  transform: translateY(-2px);
 }
 .remote-btn:active {
-  transform: translateY(2px);
-  box-shadow: none;
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
 }
 .remote-btn:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
 .remote-btn--power {
-  color: #ff5b5b;
+  color: #fff;
   flex: 0 0 auto;
-  width: 2.6em;
-  height: 2.6em;
+  width: 2.8em;
+  height: 2.8em;
   border-radius: 50%;
   font-size: 1.3rem;
+  background: radial-gradient(circle at 38% 32%, #e8897a, #c25c50);
+  box-shadow: 0 4px 0 #9c463c, 0 8px 12px rgba(0, 0, 0, 0.22);
+}
+.remote-btn--power:active {
+  box-shadow: 0 1px 0 #9c463c;
 }
 .remote-btn--ambient {
   flex: 1;
@@ -1350,22 +1465,21 @@ button {
 .volume-meter {
   flex: 2;
   height: 10px;
-  background: #000;
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 6px;
   overflow: hidden;
-  border: 1px solid #000;
 }
 .volume-meter__bar {
   height: 100%;
   width: 60%;
-  background: linear-gradient(90deg, #ffce4a, #ff8a3d);
+  background: linear-gradient(90deg, var(--accent), var(--burgundy));
   transition: width 0.15s ease;
 }
 .volume-label {
   text-align: center;
   font-family: var(--font-display);
   font-size: 0.65rem;
-  color: #c9c2b8;
+  color: var(--soft, var(--ink));
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1463,9 +1577,11 @@ button {
 
   .cinema-mode .tv-set,
   .cinema-mode .tv-set__frame,
-  .cinema-mode .tv-screen {
+  .cinema-mode .tv-set__body {
     width: 100%;
     height: 100%;
+  }
+  .cinema-mode .tv-screen {
     aspect-ratio: auto;
   }
 
