@@ -60,6 +60,13 @@ body {
 button {
   font-family: var(--font-body);
   cursor: inherit;
+  /* Certains navigateurs mobiles (Safari iOS notamment) appliquent encore
+     une apparence native de bouton (fond gris, relief système) par-dessus
+     les styles CSS personnalisés tant qu'on ne la désactive pas
+     explicitement — tous les boutons du site ont déjà leur propre fond/
+     bordure définis, donc rien ne dépend du style natif. */
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1204,9 +1211,18 @@ button {
   line-height: 1;
   padding: 0;
   color: var(--tvb3);
-  background: radial-gradient(circle at 40% 35%, var(--metal), var(--tvb3));
+  /* Fond uni de secours avant le dégradé : certains navigateurs mobiles
+     appliquent encore leur propre apparence native de <button> (bouton
+     gris/système) par-dessus un fond CSS qui échoue à s'appliquer
+     entièrement — voir -webkit-appearance ci-dessous, la cause la plus
+     probable, mais mieux vaut una couleur correcte en repli plutôt que du
+     gris si jamais le dégradé ne prenait pas. */
+  background-color: var(--tvb3);
+  background-image: radial-gradient(circle at 40% 35%, var(--metal), var(--tvb3));
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25), inset 0 0 0 2px rgba(0, 0, 0, 0.07);
   border: none;
+  -webkit-appearance: none;
+  appearance: none;
   transition: transform 0.18s ease;
 }
 .tv-settings-btn:hover {
@@ -1319,12 +1335,14 @@ button {
 }
 .tv-stand__shadow {
   position: absolute;
-  left: 20px;
-  top: 444px;
-  width: 356px;
-  height: 16px;
+  left: -2px;
+  top: 450px;
+  width: 400px;
+  height: 22px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.18);
+  /* Dégradé plutôt qu'une ellipse à bord franc : ancre mieux le meuble au
+     sol/tapis (plus large et plus sombre au centre, sous le meuble). */
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.32) 0%, rgba(0, 0, 0, 0.16) 55%, transparent 100%);
 }
 
 /* Bouton "revenir à l'écran normal" du mode cinéma : sibling direct de
@@ -1396,6 +1414,35 @@ button {
   transform: scale(0.94);
 }
 .cinema-fullscreen-btn[hidden] {
+  display: none;
+}
+
+/* Bouton de sortie du plein écran natif, À L'INTÉRIEUR de #tv-screen (voir
+   la note dans index.html) : #cinema-exit ne peut pas servir à ça, puisque
+   le navigateur ne rend que le sous-arbre de l'élément fullscreen tant
+   qu'il est actif. Affiché/masqué par l'écouteur "fullscreenchange"
+   (scripts/main.js), jamais par la classe .cinema-mode. */
+.fullscreen-exit-inline-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(20, 16, 12, 0.85);
+  color: #fff8ec;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+.fullscreen-exit-inline-btn[hidden] {
   display: none;
 }
 
@@ -2157,6 +2204,15 @@ button {
   display: flex;
   flex-direction: column-reverse;
   gap: 3px;
+  /* aspect-ratio posé ICI (sur la colonne, 6 cases empilées) plutôt que sur
+     chaque .c4-cell : certains navigateurs mobiles calculent mal la
+     hauteur d'enfants flex avec aspect-ratio individuel dans un conteneur
+     column-reverse (une seule "case" de hauteur s'affichait). Avec un seul
+     aspect-ratio sur la colonne elle-même, sa hauteur totale se déduit
+     normalement de sa largeur (fixée par la grille), et les cases n'ont
+     plus qu'à se partager cette hauteur (flex:1) — un calcul beaucoup
+     plus simple/robuste. */
+  aspect-ratio: 1 / 6.3;
   cursor: pointer;
   background: transparent;
   border: none;
@@ -2165,7 +2221,8 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 .c4-cell {
-  aspect-ratio: 1;
+  flex: 1;
+  min-height: 0;
   border-radius: 50%;
   background: #0b2c66;
 }
@@ -2614,9 +2671,10 @@ button {
     padding-right: 0;
   }
   .tv-stand__shadow {
-    left: 20px;
-    top: 380px;
-    width: 318px;
+    left: -6px;
+    top: 386px;
+    width: 362px;
+    height: 20px;
   }
   /* --- Horloge (dans la niche magnéto) + guide TV (dans la niche droite) --- */
   .vcr__clock {

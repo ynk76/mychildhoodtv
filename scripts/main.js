@@ -174,6 +174,23 @@ function initCinemaMode(fitStage) {
   const fullscreenBtn = document.getElementById("cinema-fullscreen");
   if (!screen || !room) return null;
 
+  // Si le plein écran natif (bouton #cinema-fullscreen) est actif, il faut
+  // aussi le quitter explicitement en sortant du mode cinéma : sinon la
+  // page reste "coincée" sous l'overlay plein écran du navigateur (qui ne
+  // montre QUE l'élément fullscreen, tout le reste devient inatteignable)
+  // même une fois la classe cinema-mode retirée côté CSS.
+  function exitNativeFullscreenIfAny() {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+    if (document.fullscreenElement && typeof exit === "function") {
+      try {
+        const result = exit.call(document);
+        if (result && typeof result.catch === "function") result.catch(() => {});
+      } catch (err) {
+        /* silencieux */
+      }
+    }
+  }
+
   // #cinema-exit est un sibling de #viewport (pas un descendant de #room),
   // pour que son position:fixed reste relatif à la vraie fenêtre — son
   // affichage se pilote donc directement ici, pas via un sélecteur CSS
@@ -182,6 +199,7 @@ function initCinemaMode(fitStage) {
     room.classList.remove("cinema-mode");
     if (exitBtn) exitBtn.hidden = true;
     if (fullscreenBtn) fullscreenBtn.hidden = true;
+    exitNativeFullscreenIfAny();
     fitStage();
   }
 
@@ -189,6 +207,7 @@ function initCinemaMode(fitStage) {
     const active = room.classList.toggle("cinema-mode");
     if (exitBtn) exitBtn.hidden = !active;
     if (fullscreenBtn) fullscreenBtn.hidden = !active;
+    if (!active) exitNativeFullscreenIfAny();
     fitStage();
   }
 
@@ -198,25 +217,52 @@ function initCinemaMode(fitStage) {
   });
   if (exitBtn) exitBtn.addEventListener("click", disable);
 
-  // Plein écran NATIF de la vidéo (Fullscreen API du navigateur sur
-  // l'iframe YouTube), utile surtout sur mobile où le mode cinéma n'est
-  // qu'une mise à l'échelle/rotation CSS, pas un vrai plein écran système —
-  // ici on obtient le vrai plein écran de l'OS, avec les contrôles YouTube
-  // natifs par-dessus.
+  // Plein écran NATIF de la vidéo (Fullscreen API du navigateur), utile
+  // surtout sur mobile où le mode cinéma n'est qu'une mise à l'échelle/
+  // rotation CSS, pas un vrai plein écran système.
   if (fullscreenBtn) {
     fullscreenBtn.addEventListener("click", () => {
+      // On demande le plein écran sur #tv-screen (notre propre élément),
+      // pas directement sur l'iframe YouTube (cross-origin) : certains
+      // navigateurs mobiles refusent silencieusement requestFullscreen()
+      // sur un iframe cross-origin même avec allowfullscreen, alors qu'ils
+      // l'acceptent sur un élément normal de la page (qui contient
+      // l'iframe, donc la vidéo apparaît quand même en grand).
       const iframe = screen.querySelector("iframe");
-      if (!iframe) return;
-      const request =
-        iframe.requestFullscreen || iframe.webkitRequestFullscreen || iframe.webkitEnterFullscreen || iframe.msRequestFullscreen;
-      if (typeof request === "function") {
+      const targets = [screen, iframe].filter(Boolean);
+      for (const el of targets) {
+        const request = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitEnterFullscreen || el.msRequestFullscreen;
+        if (typeof request !== "function") continue;
         try {
-          request.call(iframe);
+          const result = request.call(el);
+          // Certains navigateurs renvoient une Promise qui peut être
+          // rejetée (ex: pas d'interaction utilisateur reconnue) : on
+          // l'intercepte pour ne pas laisser une erreur non gérée, et on
+          // essaie la cible suivante si elle échoue.
+          if (result && typeof result.catch === "function") {
+            result.catch(() => {});
+          }
+          break; // la première cible qui accepte l'appel suffit
         } catch (err) {
-          /* silencieux : certains navigateurs refusent sans erreur exploitable */
+          /* on essaie la cible suivante */
         }
       }
     });
+  }
+
+  // Bouton de sortie posé DANS #tv-screen (voir la note dans index.html) :
+  // #cinema-exit, en dehors du sous-arbre fullscreen, devient inatteignable
+  // tant que le plein écran natif est actif. On le montre/masque en
+  // écoutant "fullscreenchange" plutôt qu'au clic sur #cinema-fullscreen,
+  // pour rester correct même si le plein écran est quitté autrement
+  // (touche Échap gérée nativement par le navigateur, geste système...).
+  const inlineExitBtn = document.getElementById("fullscreen-exit-inline");
+  if (inlineExitBtn) {
+    const events = ["fullscreenchange", "webkitfullscreenchange", "MSFullscreenChange"];
+    events.forEach((evt) => document.addEventListener(evt, () => {
+      inlineExitBtn.hidden = !document.fullscreenElement;
+    }));
+    inlineExitBtn.addEventListener("click", exitNativeFullscreenIfAny);
   }
 
   return toggle;
