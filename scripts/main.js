@@ -52,16 +52,21 @@ function initAmbientMuteButton() {
  * "cover" (on remplit tout l'écran, quitte à rogner un peu les bords) plutôt
  * que "contain" (qui laisserait des bandes noires sur les côtés).
  *
- * En mode cinéma desktop, on réutilise le même mécanisme en ciblant le
- * rectangle de la télé SEULE (.tv-set, sans le meuble — voir
+ * En mode cinéma (desktop ET mobile), on réutilise le même mécanisme en
+ * ciblant le rectangle de la télé SEULE (.tv-set, sans le meuble — voir
  * offsetLeft/Top/Width/Height, insensibles au transform déjà en place).
  *
- * En mode cinéma MOBILE, la télé pivote de 90° pour un grand format
- * paysage (à regarder en tournant le téléphone) : on neutralise alors le
- * transform de .stage (une transform sur un ancêtre change le référentiel
- * de position:fixed — voir .tv-set--rotated dans styles/main.css) et on
- * positionne/pivote .tv-set nous-mêmes, en fixed par rapport au vrai
- * viewport.
+ * Pas de pivot CSS manuel pour le mobile : une version précédente pivotait
+ * .tv-set de 90° en supposant que window.innerWidth/innerHeight restaient
+ * figés sur l'orientation "portrait" une fois le téléphone tourné à
+ * l'horizontale. En réalité, les navigateurs mobiles rafraîchissent bien
+ * ces valeurs (et déclenchent un vrai "resize") dès que l'utilisateur
+ * tourne physiquement son appareil — le pivot CSS s'ajoutait alors à la
+ * rotation déjà faite par l'OS/le navigateur, doublant l'effet (écran
+ * réduit à une bande, boutons mal placés). En laissant simplement le
+ * "resize" naturel redéclencher ce fit() (comme n'importe quel site vidéo
+ * responsive), la télé se recadre correctement dans le nouveau viewport
+ * réel, quelle que soit son orientation.
  */
 function initStageScale() {
   const stage = document.getElementById("room-stage");
@@ -70,7 +75,6 @@ function initStageScale() {
   if (!stage || !room || !tvSet) return () => {};
 
   const SIZE = { desktop: [1280, 740], mobile: [390, 780] };
-  const TV_ASPECT = 380 / 242; // proportions naturelles de .tv-set (desktop)
   const isMobile = () => window.innerWidth <= 760;
 
   // .tv-set est niché dans .tv-unit (lui-même enfant direct de #room) :
@@ -89,45 +93,10 @@ function initStageScale() {
     return { x, y };
   }
 
-  function fitRotatedMobile() {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const margin = 0.94;
-    stage.style.transform = "none";
-    tvSet.classList.add("tv-set--rotated");
-    // .tv-set garde sa forme "paysage" naturelle (largeur bw > hauteur bh,
-    // ratio TV_ASPECT) — c'est la ROTATION de 90° qui, une fois appliquée,
-    // échange visuellement largeur et hauteur : la largeur AFFICHÉE devient
-    // bh (doit tenir dans la largeur du viewport), la hauteur AFFICHÉE
-    // devient bw (doit tenir dans sa hauteur).
-    let bh = vw * margin;
-    let bw = bh * TV_ASPECT;
-    if (bw > vh * margin) {
-      bw = vh * margin;
-      bh = bw / TV_ASPECT;
-    }
-    tvSet.style.width = bw + "px";
-    tvSet.style.height = bh + "px";
-    tvSet.style.transform = "translate(-50%, -50%) rotate(90deg)";
-  }
-
-  function resetRotatedTvSet() {
-    tvSet.classList.remove("tv-set--rotated");
-    tvSet.style.width = "";
-    tvSet.style.height = "";
-    tvSet.style.transform = "";
-  }
-
   function fit() {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const cinema = room.classList.contains("cinema-mode");
-
-    if (cinema && isMobile()) {
-      fitRotatedMobile();
-      return;
-    }
-    resetRotatedTvSet();
 
     if (cinema) {
       // Ici la fidélité de la vidéo (pas de déformation) prime sur le

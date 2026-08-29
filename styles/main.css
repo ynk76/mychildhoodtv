@@ -1341,8 +1341,17 @@ button {
   height: 22px;
   border-radius: 50%;
   /* Dégradé plutôt qu'une ellipse à bord franc : ancre mieux le meuble au
-     sol/tapis (plus large et plus sombre au centre, sous le meuble). */
-  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.32) 0%, rgba(0, 0, 0, 0.16) 55%, transparent 100%);
+     sol/tapis (plus large et plus sombre au centre, sous le meuble).
+     mix-blend-mode:multiply est indispensable ici : le meuble est posé
+     près du centre du tapis, une zone CLAIRE du dégradé radial du tapis
+     (--rugband). Un simple assombrissement par transparence (background-
+     color en rgba) reste alors plus clair que l'anneau du tapis juste à
+     côté (--rug, plus saturé) : au lieu d'ancrer le meuble, ça dessinait
+     une flaque de lumière qui donnait l'impression qu'il flottait. En
+     multipliant, l'ombre assombrit toujours ce qu'il y a dessous
+     proportionnellement, quelle que soit la couleur du sol à cet endroit. */
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.3) 55%, transparent 100%);
+  mix-blend-mode: multiply;
 }
 
 /* Bouton "revenir à l'écran normal" du mode cinéma : sibling direct de
@@ -1458,8 +1467,9 @@ button {
   display: none;
 }
 /* Cadre + écran passent en % pour rester bien proportionnés quelle que
-   soit la taille (zoom desktop) ou la forme (pivotée mobile, voir
-   .tv-set--rotated) que .tv-set prend en mode cinéma. */
+   soit la taille que .tv-set prend en mode cinéma (desktop ET mobile —
+   même logique de zoom "contain" des deux côtés, voir initStageScale()
+   dans scripts/main.js). */
 .room.cinema-mode .tv-set__frame {
   border-radius: 4%;
 }
@@ -1474,24 +1484,6 @@ button {
   width: 91%;
   height: 91%;
   border-radius: 3%;
-}
-
-/* Mode cinéma mobile : la télé pivote de 90° pour s'afficher en grand
-   format paysage, à regarder en tournant le téléphone à l'horizontale.
-   .tv-set--rotated échappe au transform de .stage (voir initStageScale()
-   dans scripts/main.js, qui neutralise ce transform tant que ce mode est
-   actif) pour se positionner en fixed par rapport au VRAI viewport — sa
-   largeur/hauteur (inversées, puisqu'on pivote) sont calculées et posées
-   en style inline par JS selon la taille d'écran réelle. */
-.tv-set--rotated {
-  /* !important partout : la règle mobile @media (plus bas dans le fichier)
-     fixe .tv-set en left/top px avec la même spécificité — sans ça, elle
-     gagnerait sur l'ordre du fichier et cassait le centrage ci-dessous. */
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  z-index: 1000;
-  transform-origin: center center;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -2204,15 +2196,10 @@ button {
   display: flex;
   flex-direction: column-reverse;
   gap: 3px;
-  /* aspect-ratio posé ICI (sur la colonne, 6 cases empilées) plutôt que sur
-     chaque .c4-cell : certains navigateurs mobiles calculent mal la
-     hauteur d'enfants flex avec aspect-ratio individuel dans un conteneur
-     column-reverse (une seule "case" de hauteur s'affichait). Avec un seul
-     aspect-ratio sur la colonne elle-même, sa hauteur totale se déduit
-     normalement de sa largeur (fixée par la grille), et les cases n'ont
-     plus qu'à se partager cette hauteur (flex:1) — un calcul beaucoup
-     plus simple/robuste. */
-  aspect-ratio: 1 / 6.3;
+  /* Les dimensions (case + colonne) sont calculées et posées en JS en px
+     explicites (voir ConnectFourGame._layout() dans minigames.js) : ni
+     aspect-ratio ni flex-basis ne sont fiables ici sur tous les moteurs
+     mobiles quand la colonne est un enfant de grille en column-reverse. */
   cursor: pointer;
   background: transparent;
   border: none;
@@ -2221,8 +2208,6 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 .c4-cell {
-  flex: 1;
-  min-height: 0;
   border-radius: 50%;
   background: #0b2c66;
 }

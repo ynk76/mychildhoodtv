@@ -210,6 +210,38 @@
       this.root.appendChild(this.status);
       this.root.appendChild(this.boardEl);
       this._setStatus("Puissance 4 — à toi (jaune) : clique une colonne !");
+
+      // Les cases sont dimensionnées en JS (px explicites), pas en CSS
+      // (aspect-ratio posé sur une case dans une colonne flex, elle-même
+      // dans une grille) : cette combinaison ne s'affichait pas du tout sur
+      // certains navigateurs mobiles (plateau réduit à son seul fond bleu,
+      // sans cases visibles). Un calcul direct à partir de la largeur
+      // réellement rendue est beaucoup plus robuste.
+      this._layout();
+      if (typeof ResizeObserver === "function") {
+        this._resizeObserver = new ResizeObserver(() => this._layout());
+        this._resizeObserver.observe(this.boardEl);
+      } else {
+        this._onWindowResize = () => this._layout();
+        window.addEventListener("resize", this._onWindowResize);
+      }
+    }
+
+    _layout() {
+      if (!this.boardEl || !this.boardEl.isConnected) return;
+      const styles = getComputedStyle(this.boardEl);
+      const paddingX = parseFloat(styles.paddingLeft || "0") + parseFloat(styles.paddingRight || "0");
+      const gap = parseFloat(styles.columnGap || styles.gap || "0") || 0;
+      const innerWidth = this.boardEl.clientWidth - paddingX;
+      const cellSize = Math.floor((innerWidth - gap * (this.cols - 1)) / this.cols);
+      if (!(cellSize > 0)) return;
+      this.boardEl.style.height = cellSize * this.rows + gap * (this.rows - 1) + "px";
+      this.columns.forEach((cells) => {
+        cells.forEach((cell) => {
+          cell.style.width = cellSize + "px";
+          cell.style.height = cellSize + "px";
+        });
+      });
     }
 
     _setStatus(text) {
@@ -287,6 +319,8 @@
 
     destroy() {
       clearTimeout(this._restartTimer);
+      if (this._resizeObserver) this._resizeObserver.disconnect();
+      if (this._onWindowResize) window.removeEventListener("resize", this._onWindowResize);
     }
   }
 
