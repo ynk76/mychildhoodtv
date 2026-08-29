@@ -52,21 +52,38 @@ function initAmbientMuteButton() {
  * "cover" (on remplit tout l'écran, quitte à rogner un peu les bords) plutôt
  * que "contain" (qui laisserait des bandes noires sur les côtés).
  *
- * En mode cinéma (desktop ET mobile), on réutilise le même mécanisme en
- * ciblant le rectangle de la télé SEULE (.tv-set, sans le meuble — voir
+ * En mode cinéma, on réutilise le même mécanisme en ciblant le rectangle
+ * de la télé SEULE (.tv-set, sans le meuble — voir
  * offsetLeft/Top/Width/Height, insensibles au transform déjà en place).
  *
- * Pas de pivot CSS manuel pour le mobile : une version précédente pivotait
- * .tv-set de 90° en supposant que window.innerWidth/innerHeight restaient
- * figés sur l'orientation "portrait" une fois le téléphone tourné à
- * l'horizontale. En réalité, les navigateurs mobiles rafraîchissent bien
- * ces valeurs (et déclenchent un vrai "resize") dès que l'utilisateur
- * tourne physiquement son appareil — le pivot CSS s'ajoutait alors à la
- * rotation déjà faite par l'OS/le navigateur, doublant l'effet (écran
- * réduit à une bande, boutons mal placés). En laissant simplement le
- * "resize" naturel redéclencher ce fit() (comme n'importe quel site vidéo
- * responsive), la télé se recadre correctement dans le nouveau viewport
- * réel, quelle que soit son orientation.
+ * Sur mobile, tant que le téléphone reste en portrait (l'écran du
+ * navigateur, pas forcément l'appareil — voir isMobile()/rotate plus bas),
+ * on ajoute une rotation de 90° à ce même transform pour un grand format
+ * paysage à regarder en tournant la tête/le téléphone : c'est le SEUL
+ * moyen d'obtenir un grand écran sur un appareil dont la rotation est
+ * verrouillée par l'utilisateur (réglage très courant), le navigateur ne
+ * rapportant alors jamais un viewport paysage.
+ *
+ * Une version précédente appliquait cette rotation en sortant .tv-set du
+ * transform de .stage (position:fixed + rotation posée directement sur
+ * .tv-set), pour la positionner "à la main" par rapport au vrai viewport.
+ * Deux problèmes en découlaient :
+ *  - Sans le transform de .stage, le décor (#room, fond beige/nuit) ne
+ *    remplissait plus le viewport réel : l'espace restant montrait le
+ *    fond sombre de la page en dessous — la fameuse "barre noire".
+ *  - En supposant que window.innerWidth/innerHeight restaient figés sur
+ *    "portrait" même une fois le téléphone physiquement tourné : sur un
+ *    appareil dont la rotation n'est PAS verrouillée, le navigateur
+ *    rafraîchit bien ces valeurs (et déclenche un vrai "resize") dans ce
+ *    cas précis, ce qui doublait la rotation.
+ * En intégrant la rotation directement dans le MÊME transform que le
+ * zoom (appliqué à .stage, donc à tout #room y compris son fond), les
+ * deux problèmes disparaissent : le fond zoomé déborde largement du
+ * viewport dans tous les sens (comme en mode cinéma desktop, jamais de
+ * bord visible), et la rotation ne s'applique que quand le viewport
+ * rapporté est encore plus haut que large (vh > vw) — une fois un vrai
+ * passage en paysage détecté (rotation non verrouillée), elle s'efface
+ * d'elle-même au profit du même zoom "contain" non pivoté que le desktop.
  */
 function initStageScale() {
   const stage = document.getElementById("room-stage");
@@ -75,7 +92,19 @@ function initStageScale() {
   if (!stage || !room || !tvSet) return () => {};
 
   const SIZE = { desktop: [1280, 740], mobile: [390, 780] };
-  const isMobile = () => window.innerWidth <= 760;
+  const isMobile = () => viewportSize().vw <= 760;
+
+  // window.innerWidth/innerHeight ne bougent pas toujours en phase avec la
+  // barre d'adresse mobile (masquée/affichée dynamiquement) : quand elle
+  // est disponible, visualViewport reflète plus fidèlement l'espace
+  // réellement visible, ce qui évite un espace vide (barre noire) en haut
+  // ou en bas de l'écran juste après un changement d'orientation.
+  function viewportSize() {
+    if (window.visualViewport) {
+      return { vw: window.visualViewport.width, vh: window.visualViewport.height };
+    }
+    return { vw: window.innerWidth, vh: window.innerHeight };
+  }
 
   // .tv-set est niché dans .tv-unit (lui-même enfant direct de #room) :
   // offsetLeft/Top seuls ne donnent que la position LOCALE à .tv-unit, pas
@@ -94,22 +123,37 @@ function initStageScale() {
   }
 
   function fit() {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const { vw, vh } = viewportSize();
     const cinema = room.classList.contains("cinema-mode");
 
     if (cinema) {
       // Ici la fidélité de la vidéo (pas de déformation) prime sur le
       // remplissage total : on garde un facteur UNIQUE (contain), avec une
-      // marge un peu plus généreuse (0.90) pour éviter l'effet "trop
-      // zoomé" — quitte à garder une fine bordure sur les côtés.
+      // marge un peu plus généreuse pour éviter l'effet "trop zoomé" —
+      // quitte à garder une fine bordure sur les côtés.
       const { x: tl, y: tt } = offsetWithin(tvSet, room);
       const tw = tvSet.offsetWidth;
       const th = tvSet.offsetHeight;
-      const s = Math.min(vw / tw, vh / th) * 0.9;
-      const tx = vw / 2 - s * (tl + tw / 2);
-      const ty = vh / 2 - s * (tt + th / 2);
-      stage.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+      const px = tl + tw / 2;
+      const py = tt + th / 2;
+      const rotate = isMobile() && vh > vw;
+
+      if (rotate) {
+        // .stage a transform-origin:0 0 (voir styles/main.css) : la
+        // rotation s'applique donc directement autour de (0,0), pas du
+        // centre de #room — d'où cette formule (dérivée de la matrice de
+        // rotation 90°) plutôt que celle, plus simple, du cas non pivoté
+        // ci-dessous.
+        const s = Math.min(vh / tw, vw / th) * 0.94;
+        const tx = vw / 2 + s * py;
+        const ty = vh / 2 - s * px;
+        stage.style.transform = `translate(${tx}px, ${ty}px) rotate(90deg) scale(${s})`;
+      } else {
+        const s = Math.min(vw / tw, vh / th) * 0.9;
+        const tx = vw / 2 - s * px;
+        const ty = vh / 2 - s * py;
+        stage.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+      }
       return;
     }
 
@@ -126,6 +170,12 @@ function initStageScale() {
   }
 
   window.addEventListener("resize", fit);
+  // "resize" ne se déclenche pas toujours de façon fiable sur mobile quand
+  // seule la barre d'adresse apparaît/disparaît (sans changement de
+  // largeur) : visualViewport le détecte, lui, de façon plus cohérente.
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", fit);
+  }
   fit();
   return fit;
 }
@@ -189,6 +239,18 @@ function initCinemaMode(fitStage) {
   // Plein écran NATIF de la vidéo (Fullscreen API du navigateur), utile
   // surtout sur mobile où le mode cinéma n'est qu'une mise à l'échelle/
   // rotation CSS, pas un vrai plein écran système.
+  function flashFullscreenUnavailable() {
+    if (!fullscreenBtn) return;
+    // Certains navigateurs mobiles (ex : Safari iOS pas assez récent)
+    // n'exposent tout simplement pas l'API plein écran sur un élément qui
+    // n'est pas une balise <video> — la demande échoue alors forcément,
+    // silencieusement. Un bouton qui ne réagit jamais visuellement à un
+    // clic est indiscernable d'un bouton cassé : ce petit "non" (secousse +
+    // teinte rouge) confirme au moins que le clic a été pris en compte.
+    fullscreenBtn.classList.add("cinema-fullscreen-btn--unavailable");
+    setTimeout(() => fullscreenBtn.classList.remove("cinema-fullscreen-btn--unavailable"), 1500);
+  }
+
   if (fullscreenBtn) {
     fullscreenBtn.addEventListener("click", () => {
       // On demande le plein écran sur #tv-screen (notre propre élément),
@@ -199,6 +261,7 @@ function initCinemaMode(fitStage) {
       // l'iframe, donc la vidéo apparaît quand même en grand).
       const iframe = screen.querySelector("iframe");
       const targets = [screen, iframe].filter(Boolean);
+      let succeeded = false;
       for (const el of targets) {
         const request = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitEnterFullscreen || el.msRequestFullscreen;
         if (typeof request !== "function") continue;
@@ -206,16 +269,18 @@ function initCinemaMode(fitStage) {
           const result = request.call(el);
           // Certains navigateurs renvoient une Promise qui peut être
           // rejetée (ex: pas d'interaction utilisateur reconnue) : on
-          // l'intercepte pour ne pas laisser une erreur non gérée, et on
-          // essaie la cible suivante si elle échoue.
+          // l'intercepte pour donner un retour visuel plutôt que laisser
+          // une erreur non gérée ET un bouton silencieusement inerte.
           if (result && typeof result.catch === "function") {
-            result.catch(() => {});
+            result.catch(() => flashFullscreenUnavailable());
           }
-          break; // la première cible qui accepte l'appel suffit
+          succeeded = true;
+          break; // la première cible qui accepte l'appel (pas forcément qui réussit) suffit
         } catch (err) {
           /* on essaie la cible suivante */
         }
       }
+      if (!succeeded) flashFullscreenUnavailable();
     });
   }
 

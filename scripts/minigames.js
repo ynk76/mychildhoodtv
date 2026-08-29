@@ -42,7 +42,14 @@
     }
 
     _tick() {
-      const index = this.liveSchedule.index;
+      // this.liveSchedule.index n'est tenu à jour que quand un admin pilote
+      // la diffusion (voir LiveSchedule.join()) : en lecture par défaut
+      // (chaîne mélangée, sans admin — le cas de la plupart des visiteurs),
+      // il reste à null et n'avance jamais avec la playlist. getPlaylistIndex()
+      // interroge directement le lecteur YouTube : toujours à jour, quel que
+      // soit comment on est arrivé à cette vidéo (mélange, avance naturelle,
+      // synchro admin).
+      const index = this.player.getPlaylistIndex();
       const ids = this.player.getPlaylistIds();
       if (index == null || !ids || !ids[index]) return;
       const expected = ids[index];

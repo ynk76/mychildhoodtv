@@ -70,12 +70,29 @@ class RemoteControl {
       elementId: "player",
       initialVolume: this.volume,
       onReady: () => {
-        this._applyVolumeState();
+        // Le volume (setVolume) n'affecte pas l'autoplay, mais couper le
+        // son (unmute) AVANT que la lecture ait réellement démarré, si :
+        // certains navigateurs mobiles bloquent alors carrément l'autoplay
+        // (l'écran reste allumé mais la vidéo ne démarre jamais), le
+        // considérant comme une tentative de lecture automatique AVEC son.
+        // playerVars.mute=1 (voir player.js) assure un démarrage muet
+        // toujours autorisé ; on ne réapplique le son réel qu'une fois la
+        // lecture confirmée (voir onStateChange ci-dessous).
+        this.player.setVolume(this.volume);
         // Sans diffusion partagée (Firebase), on démarre localement avec la
         // chaîne par défaut ; sinon on attend la position venant de
         // l'admin (voir onChange ci-dessous), qui arrive quasi aussitôt.
         if (!this.sharedChannel.available) this.liveSchedule.startDefault(this.currentChannel());
         if (!this.power) this.player.pause();
+      },
+      onStateChange: (e) => {
+        if (e.data === YT.PlayerState.PLAYING) {
+          this._hideLoadingStatic();
+          if (!this._initialVolumeApplied) {
+            this._initialVolumeApplied = true;
+            this._applyVolumeState();
+          }
+        }
       },
     });
     this.liveSchedule = new LiveSchedule(this.player);
@@ -107,7 +124,26 @@ class RemoteControl {
 
     if (this.power) {
       this._showBanner(this.currentChannel());
+      // Le premier frame vidéo met parfois 1 à quelques secondes à
+      // s'afficher (chargement de l'iframe YouTube, mise en tampon) :
+      // sans ça, l'écran reste sur son fond noir brut pendant ce délai,
+      // qui donne l'impression que rien ne se passe alors que la vidéo
+      // tourne déjà en coulisses. On masque ce trou avec l'effet
+      // statique déjà utilisé au changement de chaîne (plus dans
+      // l'esprit rétro qu'un écran vide) et on la retire dès la
+      // première vraie lecture — ou après un délai de sécurité si la
+      // vidéo ne démarre jamais (playlist indisponible, etc.).
+      this.dom.staticOverlay.hidden = false;
+      this._loadingStaticTimer = setTimeout(() => this._hideLoadingStatic(), 6000);
     }
+  }
+
+  _hideLoadingStatic() {
+    if (this._loadingStaticTimer) {
+      clearTimeout(this._loadingStaticTimer);
+      this._loadingStaticTimer = null;
+    }
+    this.dom.staticOverlay.hidden = true;
   }
 
   /** Reçu de Firebase : l'admin a choisi/avancé/mis en pause la diffusion, pour tout le monde. */
@@ -226,6 +262,15 @@ class RemoteControl {
     if (this.power) {
       this.player.play();
       this._showBanner(this.currentChannel());
+      // Cas rare : la TV était déjà éteinte au chargement (power=false en
+      // storage), la vidéo n'a donc jamais atteint l'état PLAYING pour
+      // déclencher l'application différée du son (voir onStateChange dans
+      // le constructeur) — on s'assure ici qu'elle l'a bien été au moins
+      // une fois, sinon le son resterait coupé indéfiniment malgré l'allumage.
+      if (!this._initialVolumeApplied) {
+        this._initialVolumeApplied = true;
+        this._applyVolumeState();
+      }
     } else {
       this.player.pause();
       this._onAdSequenceEnd();
@@ -239,12 +284,45 @@ class RemoteControl {
   _onAdSequenceStart() {
     if (!this.power) return;
     this._minigameManual = false; // désormais piloté par la pub, pas par un clic manuel
+    this._inAdSequence = true;
+    this._adSkipAttempts = 0;
+    this._tryAdSkip();
+  }
+
+  /**
+   * Recharge la playlist à la même position dès qu'une pub est détectée,
+   * dans l'espoir que YouTube ne resserve pas de pub cette fois-ci (rien ne
+   * le garantit — YouTube n'expose aucune API pour lire/sauter une pub,
+   * voir la note en tête de fichier — mais un rechargement redemande
+   * simplement la vidéo depuis le début, ce qui peut suffire). Retente
+   * ainsi plusieurs fois avant d'abandonner : au-delà, cette vidéo précise
+   * sert peut-être systématiquement une pub, et on laisse le mini-jeu
+   * habituel occuper l'attente plutôt que de recharger indéfiniment.
+   */
+  _tryAdSkip() {
+    const MAX_AD_SKIP_ATTEMPTS = 4;
+    if (!this._inAdSequence) return;
+    if (this._adSkipAttempts >= MAX_AD_SKIP_ATTEMPTS) {
+      this._showAdMinigame();
+      return;
+    }
+    this._adSkipAttempts++;
+    const channel = this.liveSchedule.channel || this.currentChannel();
+    const index = this.player.getPlaylistIndex();
+    if (channel && index != null) this.player.loadPlaylistAt(channel, index, 0);
+    clearTimeout(this._adSkipTimer);
+    this._adSkipTimer = setTimeout(() => this._tryAdSkip(), 2500);
+  }
+
+  _showAdMinigame() {
     if (this.dom.minigameHint) this.dom.minigameHint.textContent = "📺 Pub en cours — petite pause jeu !";
     this.dom.minigameOverlay.hidden = false;
     this.minigameOverlay.show();
   }
 
   _onAdSequenceEnd() {
+    this._inAdSequence = false;
+    clearTimeout(this._adSkipTimer);
     // Ne referme pas une session ouverte à la main (chat noir cliqué) : elle
     // ne dépend pas de la pub, seule la pub qui vient de se terminer doit
     // fermer la sienne.

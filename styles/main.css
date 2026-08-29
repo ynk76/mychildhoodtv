@@ -79,6 +79,17 @@ button {
   overflow: hidden;
   background: #171220;
 }
+/* En mode cinéma, le canevas du décor (#room) est zoomé sur la seule télé
+   (voir initStageScale() dans scripts/main.js) : sur mobile pivoté, la
+   forme très étroite/haute du canevas (390x780) ne peut pas, en même
+   temps, cadrer la télé sans la rogner ET couvrir tout le viewport une
+   fois pivotée — un espace reste visible au-dessus/en dessous. Plutôt que
+   d'y laisser voir le violet sombre générique de la page (qui ressemblait
+   à un bug), ce fond passe en noir pur : un bandeau noir autour de l'image
+   se lit comme du letterboxing de cinéma volontaire, pas comme un accroc. */
+#viewport:has(.room.cinema-mode) {
+  background: #000;
+}
 .stage {
   position: fixed;
   top: 0;
@@ -1284,6 +1295,26 @@ button {
   border-radius: 6px 6px 10px 10px;
   background: linear-gradient(180deg, var(--wood), var(--wood2));
 }
+/* Petits pieds au sol : sans eux, le meuble s'arrêtait net juste au-dessus
+   de son ombre (voir .tv-stand__shadow), ce qui, même une fois l'ombre
+   bien assombrie, laissait un fin espace vide entre le bas du meuble et
+   le tapis — l'impression de "flotter" venait autant de cette rupture
+   visuelle que de l'ombre elle-même. Chevauchent légèrement le bas du
+   meuble ET le haut de l'ombre pour combler ce vide. */
+.tv-stand__foot {
+  position: absolute;
+  top: 440px;
+  width: 26px;
+  height: 16px;
+  background: var(--footDark);
+  border-radius: 0 0 5px 5px;
+}
+.tv-stand__foot--l {
+  left: 48px;
+}
+.tv-stand__foot--r {
+  right: 48px;
+}
 .tv-stand__niche {
   position: absolute;
   left: 24px;
@@ -1425,6 +1456,32 @@ button {
 .cinema-fullscreen-btn[hidden] {
   display: none;
 }
+/* Retour visuel quand la Fullscreen API échoue ou n'existe pas pour cet
+   élément sur ce navigateur (voir flashFullscreenUnavailable() dans
+   scripts/main.js) : sans ça, le clic ne produit rigoureusement aucun
+   effet visible, indiscernable d'un bouton cassé. */
+.cinema-fullscreen-btn--unavailable {
+  animation: cinema-fullscreen-shake 0.4s ease;
+  background: linear-gradient(160deg, #7a3a34, #4a201c) !important;
+}
+@keyframes cinema-fullscreen-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
 
 /* Bouton de sortie du plein écran natif, À L'INTÉRIEUR de #tv-screen (voir
    la note dans index.html) : #cinema-exit ne peut pas servir à ça, puisque
@@ -1462,14 +1519,15 @@ button {
 .room.cinema-mode .tv-legs__foot,
 .room.cinema-mode .tv-stand__top,
 .room.cinema-mode .tv-stand,
+.room.cinema-mode .tv-stand__foot,
 .room.cinema-mode .tv-stand__shadow,
 .room.cinema-mode .tv-set__panel {
   display: none;
 }
 /* Cadre + écran passent en % pour rester bien proportionnés quelle que
-   soit la taille que .tv-set prend en mode cinéma (desktop ET mobile —
-   même logique de zoom "contain" des deux côtés, voir initStageScale()
-   dans scripts/main.js). */
+   soit la taille que .tv-set prend en mode cinéma (le pivot mobile
+   éventuel s'applique au transform de .stage, pas à .tv-set lui-même —
+   voir initStageScale() dans scripts/main.js). */
 .room.cinema-mode .tv-set__frame {
   border-radius: 4%;
 }
@@ -2654,6 +2712,17 @@ button {
     font-size: 11px;
     letter-spacing: 5px;
     padding-right: 0;
+  }
+  .tv-stand__foot {
+    top: 376px;
+    width: 22px;
+    height: 14px;
+  }
+  .tv-stand__foot--l {
+    left: 40px;
+  }
+  .tv-stand__foot--r {
+    right: 40px;
   }
   .tv-stand__shadow {
     left: -6px;
