@@ -305,6 +305,11 @@
      initCinemaMode() dans scripts/main.js. -->
 <button id="cinema-exit" class="cinema-exit-btn" hidden aria-label="Revenir à l'écran normal">✕</button>
 
+<!-- Plein écran natif (Fullscreen API sur l'iframe YouTube) : seulement
+     utile une fois en mode cinéma, surtout sur mobile où le "grand écran"
+     n'est qu'une mise à l'échelle CSS, pas un vrai plein écran système. -->
+<button id="cinema-fullscreen" class="cinema-fullscreen-btn" hidden aria-label="Plein écran vidéo">⛶</button>
+
 <!-- Mini-jeux (pendant une pub, ou à la demande via le chat noir) : plein
      écran comme le mode cinéma, pas coincé dans le petit écran rétro de la
      télé où on ne voyait presque rien. Sibling de #viewport pour la même

@@ -171,6 +171,7 @@ function initCinemaMode(fitStage) {
   const screen = document.getElementById("tv-screen");
   const room = document.getElementById("room");
   const exitBtn = document.getElementById("cinema-exit");
+  const fullscreenBtn = document.getElementById("cinema-fullscreen");
   if (!screen || !room) return null;
 
   // #cinema-exit est un sibling de #viewport (pas un descendant de #room),
@@ -180,12 +181,14 @@ function initCinemaMode(fitStage) {
   function disable() {
     room.classList.remove("cinema-mode");
     if (exitBtn) exitBtn.hidden = true;
+    if (fullscreenBtn) fullscreenBtn.hidden = true;
     fitStage();
   }
 
   function toggle() {
     const active = room.classList.toggle("cinema-mode");
     if (exitBtn) exitBtn.hidden = !active;
+    if (fullscreenBtn) fullscreenBtn.hidden = !active;
     fitStage();
   }
 
@@ -194,6 +197,27 @@ function initCinemaMode(fitStage) {
     if (e.key === "Escape" && room.classList.contains("cinema-mode")) disable();
   });
   if (exitBtn) exitBtn.addEventListener("click", disable);
+
+  // Plein écran NATIF de la vidéo (Fullscreen API du navigateur sur
+  // l'iframe YouTube), utile surtout sur mobile où le mode cinéma n'est
+  // qu'une mise à l'échelle/rotation CSS, pas un vrai plein écran système —
+  // ici on obtient le vrai plein écran de l'OS, avec les contrôles YouTube
+  // natifs par-dessus.
+  if (fullscreenBtn) {
+    fullscreenBtn.addEventListener("click", () => {
+      const iframe = screen.querySelector("iframe");
+      if (!iframe) return;
+      const request =
+        iframe.requestFullscreen || iframe.webkitRequestFullscreen || iframe.webkitEnterFullscreen || iframe.msRequestFullscreen;
+      if (typeof request === "function") {
+        try {
+          request.call(iframe);
+        } catch (err) {
+          /* silencieux : certains navigateurs refusent sans erreur exploitable */
+        }
+      }
+    });
+  }
 
   return toggle;
 }

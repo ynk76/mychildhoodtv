@@ -1364,6 +1364,41 @@ button {
   display: none;
 }
 
+/* Plein écran natif de la vidéo (Fullscreen API), même logique que
+   .cinema-exit-btn mais posé côté opposé (haut-gauche) pour ne jamais se
+   chevaucher avec lui. */
+.cinema-fullscreen-btn {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #4a3a34, #2a201c);
+  color: #fff8ec;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  z-index: 2000;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.cinema-fullscreen-btn:hover {
+  transform: scale(1.08);
+  background: linear-gradient(160deg, #5c4841, #362a24);
+}
+.cinema-fullscreen-btn:active {
+  transform: scale(0.94);
+}
+.cinema-fullscreen-btn[hidden] {
+  display: none;
+}
+
 /* ---------------------------------------------------------------------- */
 /* MODE CINÉMA : agrandir SEULEMENT la télé (.tv-set), sans le meuble       */
 /* ---------------------------------------------------------------------- */
@@ -2051,6 +2086,10 @@ button {
   font-family: var(--font-mono);
   text-align: center;
   padding: 1em;
+  /* Filet de sécurité sur les petits écrans (mobile, clavier ouvert...) :
+     si le plateau + les textes dépassent la hauteur visible, on peut
+     défiler jusqu'à eux plutôt que les rendre inatteignables. */
+  overflow-y: auto;
 }
 .minigame-overlay[hidden] {
   display: none;
@@ -2099,6 +2138,8 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .ttt-cell:disabled {
   cursor: default;
@@ -2120,6 +2161,8 @@ button {
   background: transparent;
   border: none;
   padding: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .c4-cell {
   aspect-ratio: 1;
@@ -2721,5 +2764,19 @@ button {
     left: 10px;
     top: 78px;
     width: auto;
+  }
+
+  /* Mini-jeux : plateaux un peu plus contenus sur mobile pour tenir sans
+     déborder à côté du texte, même sur un écran bas (clavier ouvert,
+     paysage...) — voir aussi overflow-y:auto sur .minigame-overlay. */
+  .ttt-board {
+    width: min(78vw, 48vh, 320px);
+  }
+  .c4-board {
+    width: min(92vw, 50vh, 380px);
+  }
+  .pong-canvas {
+    width: min(92vw, 500px);
+    height: min(55vw, 300px);
   }
 }

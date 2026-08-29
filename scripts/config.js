@@ -15,7 +15,7 @@
 const DEFAULT_CHANNELS = [
   {
     number: 1,
-    name: "Génériques Dessins Animés 2000",
+    name: "My Childhood TV",
     playlistId: "PL6hfXTHSuahysoYq9bztq8UVSgXBtU_Jt",
   },
 ];
