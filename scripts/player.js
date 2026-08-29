@@ -19,6 +19,7 @@ class TVPlayer {
     this.ready = false;
     this._pending = null; // { type: "at"|"shuffled", channel, index, startSeconds } avant que le lecteur soit prêt
     this._pendingRandomJump = false; // en attente que la playlist soit chargée pour sauter à un index aléatoire
+    this._pendingShuffle = false; // en attente que la playlist soit chargée pour activer setShuffle
     this._loadApi();
   }
 
@@ -101,6 +102,20 @@ class TVPlayer {
               }
             }
           }
+          if (this._pendingShuffle) {
+            // Même contrainte que _pendingRandomJump ci-dessus : setShuffle()
+            // n'est fiable qu'une fois la playlist vraiment chargée, pas
+            // juste après l'appel à loadPlaylist().
+            const ids = this.getPlaylistIds();
+            if (ids && ids.length > 1) {
+              this._pendingShuffle = false;
+              try {
+                this.player.setShuffle(true);
+              } catch (err) {
+                /* silencieux */
+              }
+            }
+          }
           if (typeof this.onStateChangeCallback === "function") this.onStateChangeCallback(e);
         },
         onError: () => {
@@ -151,8 +166,10 @@ class TVPlayer {
       // N'affecte pas la vidéo EN COURS (déjà fixée par "index" ci-dessus),
       // seulement celles qui suivront automatiquement à la fin de chaque
       // vidéo : elles doivent tomber sur une chaîne aléatoire de la
-      // playlist, pas juste la suivante dans l'ordre.
-      this.player.setShuffle(true);
+      // playlist, pas juste la suivante dans l'ordre. Différé (voir
+      // onStateChange) : appelé immédiatement ici, setShuffle() n'est pas
+      // fiable tant que la playlist n'est pas vraiment chargée.
+      this._pendingShuffle = true;
     } catch (e) {
       /* playlist invalide fournie par l'utilisateur : silencieux */
     }
@@ -175,10 +192,11 @@ class TVPlayer {
     }
     try {
       this._pendingRandomJump = true;
+      this._pendingShuffle = true; // pour que les vidéos SUIVANTES aussi soient aléatoires
       this.player.loadPlaylist({ list: channel.playlistId, listType: "playlist", index: 0 });
-      this.player.setShuffle(true); // pour que les vidéos SUIVANTES aussi soient aléatoires
     } catch (e) {
       this._pendingRandomJump = false;
+      this._pendingShuffle = false;
     }
   }
 

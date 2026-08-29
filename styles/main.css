@@ -2033,16 +2033,20 @@ button {
   height: 100%;
   display: block;
 }
+/* Plein écran comme le mode cinéma (voir .cinema-exit-btn) : pas
+   coincé dans le petit écran rétro de la télé, où les plateaux de jeu
+   étaient minuscules et illisibles. Sibling de #viewport dans le HTML,
+   donc ce position:fixed est bien relatif à la vraie fenêtre. */
 .minigame-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 25;
-  background: rgba(10, 6, 3, 0.9);
+  z-index: 1800;
+  background: rgba(10, 6, 3, 0.94);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.7em;
+  gap: 1em;
   color: #fff8ec;
   font-family: var(--font-mono);
   text-align: center;
@@ -2053,17 +2057,17 @@ button {
 }
 .minigame-overlay__close {
   position: absolute;
-  top: 0.5em;
-  right: 0.5em;
-  width: 1.8em;
-  height: 1.8em;
+  top: 1em;
+  right: 1em;
+  width: 2.4em;
+  height: 2.4em;
   padding: 0;
   line-height: 1;
-  font-size: 1rem;
+  font-size: 1.2rem;
 }
 .minigame-overlay__hint {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   letter-spacing: 0.04em;
 }
 .minigame-overlay__mount {
@@ -2080,8 +2084,8 @@ button {
 .ttt-board {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-  width: min(60vw, 220px);
+  gap: 6px;
+  width: min(70vw, 60vh, 360px);
   aspect-ratio: 1;
 }
 .ttt-cell {
@@ -2102,10 +2106,10 @@ button {
 .c4-board {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
-  width: min(80vw, 260px);
+  gap: 5px;
+  width: min(85vw, 65vh, 480px);
   background: #1e4fa3;
-  padding: 4px;
+  padding: 6px;
   border-radius: 6px;
 }
 .c4-col {
@@ -2129,8 +2133,8 @@ button {
   background: #e2453f;
 }
 .pong-canvas {
-  width: min(80vw, 300px);
-  height: min(48vw, 180px);
+  width: min(85vw, 600px);
+  height: min(51vw, 360px);
   background: #08130c;
   border: 2px solid #4a2e18;
   border-radius: 4px;

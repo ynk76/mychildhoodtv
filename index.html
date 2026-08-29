@@ -162,11 +162,6 @@
             <div id="power-off-overlay" class="power-off-overlay" hidden aria-hidden="true">
               <div class="power-off-overlay__scan"></div>
             </div>
-            <div id="minigame-overlay" class="minigame-overlay" hidden>
-              <button id="minigame-close" class="icon-btn minigame-overlay__close" aria-label="Fermer les mini-jeux">✕</button>
-              <p id="minigame-hint" class="minigame-overlay__hint">🎮 Petite pause jeu !</p>
-              <div id="minigame-mount" class="minigame-overlay__mount"></div>
-            </div>
           </div>
           <div class="tv-set__panel" aria-hidden="true">
             <div class="tv-set__knob"></div>
@@ -309,6 +304,16 @@
      ancêtres avec transform dans styles/main.css. Affiché/masqué en JS par
      initCinemaMode() dans scripts/main.js. -->
 <button id="cinema-exit" class="cinema-exit-btn" hidden aria-label="Revenir à l'écran normal">✕</button>
+
+<!-- Mini-jeux (pendant une pub, ou à la demande via le chat noir) : plein
+     écran comme le mode cinéma, pas coincé dans le petit écran rétro de la
+     télé où on ne voyait presque rien. Sibling de #viewport pour la même
+     raison que #cinema-exit ci-dessus. -->
+<div id="minigame-overlay" class="minigame-overlay" hidden>
+  <button id="minigame-close" class="icon-btn minigame-overlay__close" aria-label="Fermer les mini-jeux">✕</button>
+  <p id="minigame-hint" class="minigame-overlay__hint">🎮 Petite pause jeu !</p>
+  <div id="minigame-mount" class="minigame-overlay__mount"></div>
+</div>
 
 <div id="guide-overlay" class="settings-modal" hidden>
   <div class="settings-panel" role="dialog" aria-modal="true" aria-label="Programme télé">

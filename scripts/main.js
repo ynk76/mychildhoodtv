@@ -131,11 +131,13 @@ function initStageScale() {
 
     if (cinema) {
       // Ici la fidélité de la vidéo (pas de déformation) prime sur le
-      // remplissage total : on garde un facteur UNIQUE (contain).
+      // remplissage total : on garde un facteur UNIQUE (contain), avec une
+      // marge un peu plus généreuse (0.90) pour éviter l'effet "trop
+      // zoomé" — quitte à garder une fine bordure sur les côtés.
       const { x: tl, y: tt } = offsetWithin(tvSet, room);
       const tw = tvSet.offsetWidth;
       const th = tvSet.offsetHeight;
-      const s = Math.min(vw / tw, vh / th) * 0.96;
+      const s = Math.min(vw / tw, vh / th) * 0.9;
       const tx = vw / 2 - s * (tl + tw / 2);
       const ty = vh / 2 - s * (tt + th / 2);
       stage.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;

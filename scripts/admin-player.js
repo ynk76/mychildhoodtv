@@ -40,6 +40,8 @@ class AdminPlayer {
     this._publishTimer = null;
     this._lastPublishedIndex = null;
     this._lastPublishedPaused = null;
+    this._pendingShuffle = false; // en attente que la playlist studio soit chargée pour activer setShuffle
+    this._lastGoodPublish = null; // { channel, index, currentTime, paused } — dernier contenu (pas pub) publié
   }
 
   /** Charge (ou change vers) une chaîne dans le lecteur studio. */
@@ -83,12 +85,34 @@ class AdminPlayer {
       this.player.cuePlaylist({ list: channel.playlistId, listType: "playlist", index: 0 });
       this.player.mute();
       // Répercuté à tous les visiteurs via l'index publié : une fois cette
-      // vidéo terminée, le studio (et donc le salon de tout le monde)
-      // passe à une chaîne aléatoire de la playlist, pas juste la suivante.
-      this.player.setShuffle(true);
+      // vidéo terminée, le studio (et donc le salon de tout le monde) passe
+      // à une chaîne aléatoire de la playlist, pas juste la suivante.
+      // Différé (voir _publishIfChanged) : appelé immédiatement, setShuffle()
+      // n'est pas fiable tant que la playlist n'est pas vraiment chargée.
+      this._pendingShuffle = true;
       this._lastPublishedIndex = null;
     } catch (e) {
       /* silencieux */
+    }
+  }
+
+  /**
+   * Best-effort, même heuristique que scripts/minigames.js côté salon : une
+   * pub n'apparaît jamais dans la playlist elle-même, donc si la vidéo
+   * réellement affichée par le studio ne correspond pas à celle attendue à
+   * l'index courant (ou que son ID est inaccessible, ce que fait souvent
+   * YouTube pendant une pub), c'est probablement une pub.
+   */
+  _looksLikeAd() {
+    try {
+      const ids = this.player.getPlaylist();
+      const index = this.player.getPlaylistIndex();
+      if (!ids || index == null || index < 0 || !ids[index]) return false;
+      const data = this.player.getVideoData();
+      const actual = data && data.video_id;
+      return actual == null || actual !== ids[index];
+    } catch (e) {
+      return false;
     }
   }
 
@@ -106,6 +130,13 @@ class AdminPlayer {
       if (typeof this.player.isMuted === "function" && !this.player.isMuted()) {
         this.player.mute();
       }
+      if (this._pendingShuffle) {
+        const ids = this.player.getPlaylist();
+        if (ids && ids.length > 1) {
+          this._pendingShuffle = false;
+          this.player.setShuffle(true);
+        }
+      }
       const state = this.player.getPlayerState();
       // -1 (non démarré) ou 5 (mise en attente) : rien à publier pour l'instant
       if (state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.PAUSED) return;
@@ -113,10 +144,38 @@ class AdminPlayer {
       if (index == null || index < 0) return;
       const paused = state === YT.PlayerState.PAUSED;
       const currentTime = this.player.getCurrentTime();
+
+      if (this._looksLikeAd()) {
+        // Une pub joue côté studio (ex: l'admin vient de changer de chaîne).
+        // On republie la DERNIÈRE position de contenu connue plutôt que
+        // l'état de la pub : la télé du salon continue donc tranquillement
+        // l'ancienne vidéo — au lieu de montrer la pub, ou de décrocher au
+        // bout de 12s faute de mise à jour (voir ADMIN_STALE_THRESHOLD_MS
+        // dans scripts/remote.js) — jusqu'à ce que la VRAIE nouvelle vidéo
+        // démarre, où tout le monde bascule dessus d'un coup, à son début.
+        // On extrapole le temps écoulé depuis le début de la pub (plutôt
+        // que de republier un "currentTime" figé) pour que la position
+        // publiée continue d'avancer comme si l'ancienne vidéo jouait
+        // toujours : sinon, chaque republication figée déclencherait une
+        // correction de dérive qui fait sauter le salon en arrière.
+        if (!this._inAd) {
+          this._inAd = true;
+          this._adStartedAt = Date.now();
+        }
+        if (this._lastGoodPublish) {
+          const g = this._lastGoodPublish;
+          const extrapolated = g.currentTime + (g.paused ? 0 : (Date.now() - this._adStartedAt) / 1000);
+          this.sharedChannel.publishPosition(g.channel, g.index, extrapolated, g.paused);
+        }
+        return;
+      }
+      this._inAd = false;
+
       // on republie si l'index a changé, l'état pause a changé, ou simplement
       // toutes les quelques secondes pour garder "updatedAt" frais (permet
       // aux nouveaux arrivants de rattraper la bonne position)
       this.sharedChannel.publishPosition(this.channel, index, currentTime, paused);
+      this._lastGoodPublish = { channel: this.channel, index, currentTime, paused };
       this._lastPublishedIndex = index;
       this._lastPublishedPaused = paused;
     } catch (e) {
