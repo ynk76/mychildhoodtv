@@ -129,25 +129,29 @@ function initStageScale() {
     }
     resetRotatedTvSet();
 
-    let s, tx, ty;
     if (cinema) {
+      // Ici la fidélité de la vidéo (pas de déformation) prime sur le
+      // remplissage total : on garde un facteur UNIQUE (contain).
       const { x: tl, y: tt } = offsetWithin(tvSet, room);
       const tw = tvSet.offsetWidth;
       const th = tvSet.offsetHeight;
-      s = Math.min(vw / tw, vh / th) * 0.96;
-      tx = vw / 2 - s * (tl + tw / 2);
-      ty = vh / 2 - s * (tt + th / 2);
-    } else {
-      // "contain" (min), pas "cover" (max) : tout le décor doit rester
-      // visible à l'écran, quitte à garder une fine bordure sur les côtés
-      // plutôt que de rogner des éléments (télécommande, tchat...).
-      const [w, h] = isMobile() ? SIZE.mobile : SIZE.desktop;
-      s = Math.min(vw / w, vh / h);
-      tx = (vw - s * w) / 2;
-      ty = (vh - s * h) / 2;
+      const s = Math.min(vw / tw, vh / th) * 0.96;
+      const tx = vw / 2 - s * (tl + tw / 2);
+      const ty = vh / 2 - s * (tt + th / 2);
+      stage.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+      return;
     }
 
-    stage.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+    // Hors mode cinéma, le décor n'est qu'un fond : on étire le canevas
+    // avec deux facteurs INDÉPENDANTS (largeur/hauteur) pour remplir tout
+    // l'écran exactement, sans bande noire ET sans rogner le moindre
+    // élément (contrairement à un "cover" à facteur unique). La légère
+    // déformation que ça introduit est imperceptible tant le ratio du
+    // canevas (1280x740, 390x780) reste proche de celui de l'écran.
+    const [w, h] = isMobile() ? SIZE.mobile : SIZE.desktop;
+    const sx = vw / w;
+    const sy = vh / h;
+    stage.style.transform = `scale(${sx}, ${sy})`;
   }
 
   window.addEventListener("resize", fit);
@@ -232,12 +236,21 @@ function initApp() {
     guideClose: document.getElementById("guide-close"),
     minigameOverlay: document.getElementById("minigame-overlay"),
     minigameMount: document.getElementById("minigame-mount"),
+    minigameHint: document.getElementById("minigame-hint"),
   });
 
   remote.onFullscreenRequest = toggleCinema;
 
   const guideItem = document.getElementById("tv-guide-item");
   if (guideItem) guideItem.addEventListener("click", () => remote.openGuide());
+
+  // Le chat noir (le chat du salon) donne aussi accès aux mini-jeux à la
+  // demande, sans attendre une pub — en plus de son animation existante
+  // (miaulement/réveil, voir scripts/decor.js).
+  const catEl = document.getElementById("room-cat");
+  if (catEl) catEl.addEventListener("click", () => remote.toggleMinigameMenu());
+  const minigameClose = document.getElementById("minigame-close");
+  if (minigameClose) minigameClose.addEventListener("click", () => remote.toggleMinigameMenu());
 
   if (typeof window.initChat === "function") window.initChat();
 

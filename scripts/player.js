@@ -148,6 +148,11 @@ class TVPlayer {
         index: index || 0,
         startSeconds: startSeconds || 0,
       });
+      // N'affecte pas la vidéo EN COURS (déjà fixée par "index" ci-dessus),
+      // seulement celles qui suivront automatiquement à la fin de chaque
+      // vidéo : elles doivent tomber sur une chaîne aléatoire de la
+      // playlist, pas juste la suivante dans l'ordre.
+      this.player.setShuffle(true);
     } catch (e) {
       /* playlist invalide fournie par l'utilisateur : silencieux */
     }
@@ -171,6 +176,7 @@ class TVPlayer {
     try {
       this._pendingRandomJump = true;
       this.player.loadPlaylist({ list: channel.playlistId, listType: "playlist", index: 0 });
+      this.player.setShuffle(true); // pour que les vidéos SUIVANTES aussi soient aléatoires
     } catch (e) {
       this._pendingRandomJump = false;
     }

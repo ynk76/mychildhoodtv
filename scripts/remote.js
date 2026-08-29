@@ -238,13 +238,34 @@ class RemoteControl {
 
   _onAdSequenceStart() {
     if (!this.power) return;
+    this._minigameManual = false; // désormais piloté par la pub, pas par un clic manuel
+    if (this.dom.minigameHint) this.dom.minigameHint.textContent = "📺 Pub en cours — petite pause jeu !";
     this.dom.minigameOverlay.hidden = false;
     this.minigameOverlay.show();
   }
 
   _onAdSequenceEnd() {
+    // Ne referme pas une session ouverte à la main (chat noir cliqué) : elle
+    // ne dépend pas de la pub, seule la pub qui vient de se terminer doit
+    // fermer la sienne.
+    if (this._minigameManual) return;
     this.dom.minigameOverlay.hidden = true;
     this.minigameOverlay.hide();
+  }
+
+  /** Ouvre/ferme les mini-jeux à la demande (clic sur le chat noir), même hors pub. */
+  toggleMinigameMenu() {
+    if (!this.power) return;
+    if (this.dom.minigameOverlay.hidden) {
+      this._minigameManual = true;
+      if (this.dom.minigameHint) this.dom.minigameHint.textContent = "🎮 Petite pause jeu !";
+      this.dom.minigameOverlay.hidden = false;
+      this.minigameOverlay.show();
+    } else {
+      this._minigameManual = false;
+      this.dom.minigameOverlay.hidden = true;
+      this.minigameOverlay.hide();
+    }
   }
 
   _updatePowerUI(animate) {

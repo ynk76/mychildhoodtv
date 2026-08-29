@@ -1153,11 +1153,21 @@ button {
   width: 100%;
   height: 100%;
 }
+/* La boîte de l'écran (rétro, ~4:3) est plus étroite qu'une vidéo YouTube
+   (16:9) : en 100%/100%, YouTube ajoute ses propres bandes noires DANS
+   l'iframe pour respecter le ratio de la vidéo, qui paraît alors minuscule.
+   On dimensionne plutôt l'iframe en 16:9 calé sur la HAUTEUR du cadre puis
+   centré (l'excédent en largeur est rogné par l'overflow:hidden du parent)
+   — équivalent d'un object-fit:cover, impossible à poser sur l'iframe
+   lui-même. */
 #tv-screen iframe {
   position: absolute;
-  inset: 0;
-  width: 100%;
+  top: 50%;
+  left: 50%;
   height: 100%;
+  width: auto;
+  aspect-ratio: 16 / 9;
+  transform: translate(-50%, -50%);
   pointer-events: none;
 }
 .tv-set__panel {
@@ -1420,15 +1430,24 @@ button {
 }
 .bedside-lamp {
   position: absolute;
-  left: 22px;
-  top: 0;
+  /* 894,330 = table de chevet (872,330) + décalage local d'origine (22,0) —
+     #bedside-lamp est maintenant un enfant direct de #room, pas de
+     .side-table, pour rester affiché/cliquable sur mobile même quand la
+     table de chevet disparaît (voir RESPONSIVE). z-index au-dessus de
+     .side-table (7) : sinon elle capte les clics par-dessus la lampe. */
+  left: 894px;
+  top: 330px;
   width: 106px;
   height: 126px;
+  z-index: 8;
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
   transition: transform 0.18s ease;
+}
+.bedside-lamp__cord {
+  display: none;
 }
 .bedside-lamp:hover {
   transform: translateY(-3px) scale(1.03);
@@ -2032,6 +2051,16 @@ button {
 .minigame-overlay[hidden] {
   display: none;
 }
+.minigame-overlay__close {
+  position: absolute;
+  top: 0.5em;
+  right: 0.5em;
+  width: 1.8em;
+  height: 1.8em;
+  padding: 0;
+  line-height: 1;
+  font-size: 1rem;
+}
 .minigame-overlay__hint {
   margin: 0;
   font-size: 1.1rem;
@@ -2569,74 +2598,52 @@ button {
   }
 
   /* --- Lampe de chevet + table --- */
+  /* Table de chevet entièrement masquée sur mobile : pas la place, et elle
+     chevauchait la télécommande. La lampe (même bouton, même fonction
+     jour/nuit) pend du plafond en haut à droite à la place. */
   .side-table {
-    left: 282px;
-    top: 474px;
-    width: 104px;
-    height: 150px;
+    display: none;
   }
   .bedside-lamp {
-    left: 4px;
+    /* décalé pour ne pas chevaucher le bouton tchat (right:14/top:14/56x56) */
+    left: 236px;
     top: 0;
-    width: 92px;
-    height: 106px;
+    width: 70px;
+    height: 148px;
+  }
+  .bedside-lamp__cord {
+    display: block;
+    position: absolute;
+    left: 32px;
+    top: 0;
+    width: 6px;
+    height: 72px;
+    background: var(--metal);
   }
   .bedside-lamp__shade {
-    width: 92px;
-    height: 52px;
-    border-radius: 10px 10px 23px 23px / 35px 35px 9px 9px;
+    left: 5px;
+    top: 72px;
+    width: 60px;
+    height: 34px;
+    border-radius: 8px 8px 26px 26px / 8px 8px 20px 20px;
   }
   .bedside-lamp__neck {
-    left: 43px;
-    top: 50px;
-    height: 38px;
+    display: none;
   }
   .bedside-lamp__base {
-    left: 24px;
-    top: 86px;
-    width: 44px;
-    height: 14px;
+    display: none;
   }
   .bedside-lamp__bulb {
-    left: 5px;
-    top: 44px;
-    width: 82px;
-    height: 18px;
+    left: 8px;
+    top: 92px;
+    width: 54px;
+    height: 16px;
   }
   .bedside-lamp__glow {
     left: -90px;
-    top: -50px;
-    width: 280px;
-    height: 280px;
-  }
-  .side-table__top {
-    top: 100px;
-    width: 104px;
-    height: 12px;
-  }
-  .side-table__body {
-    left: 7px;
-    top: 112px;
-    width: 90px;
-    height: 46px;
-    border-radius: 3px 3px 6px 6px;
-  }
-  .side-table__body::before {
-    left: 12px;
-    top: 12px;
-    right: 12px;
-    height: 16px;
-  }
-  .side-table__body::after {
-    display: none;
-  }
-  .side-table__shadow {
-    left: -4px;
-    top: 160px;
-    width: 112px;
-  }
-  .side-table__foot {
-    display: none;
+    top: 10px;
+    width: 250px;
+    height: 250px;
   }
 
   /* --- Télécommande pleine largeur, touches ≥ 50px --- */

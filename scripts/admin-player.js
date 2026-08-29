@@ -82,6 +82,10 @@ class AdminPlayer {
     try {
       this.player.cuePlaylist({ list: channel.playlistId, listType: "playlist", index: 0 });
       this.player.mute();
+      // Répercuté à tous les visiteurs via l'index publié : une fois cette
+      // vidéo terminée, le studio (et donc le salon de tout le monde)
+      // passe à une chaîne aléatoire de la playlist, pas juste la suivante.
+      this.player.setShuffle(true);
       this._lastPublishedIndex = null;
     } catch (e) {
       /* silencieux */
