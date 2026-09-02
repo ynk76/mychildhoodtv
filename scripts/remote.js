@@ -59,8 +59,13 @@ class RemoteControl {
     this.dom = dom;
     this.channels = Storage.getAllChannels();
     this.volume = Storage.getVolume();
-    this.muted = Storage.getMuted();
-    this.power = Storage.getPower();
+    // Toujours allumée et avec le son, à chaque arrivée sur le site — peu
+    // importe si le son ou la télé avaient été coupés lors d'une visite
+    // précédente (voir Storage.setMuted/setPower plus bas, qui continuent
+    // de suivre les changements PENDANT la session, ex: pour le lecteur
+    // studio admin, mais ne sont plus relus au chargement).
+    this.muted = false;
+    this.power = true;
     this.currentIndex = this._resolveInitialIndex();
     this.adminSelectedIndex = this.currentIndex;
     this.adminPlayer = null;
@@ -84,6 +89,7 @@ class RemoteControl {
         // l'admin (voir onChange ci-dessous), qui arrive quasi aussitôt.
         if (!this.sharedChannel.available) this.liveSchedule.startDefault(this.currentChannel());
         if (!this.power) this.player.pause();
+        else this._startAutoplayWatchdog();
       },
       onStateChange: (e) => {
         if (e.data === YT.PlayerState.PLAYING) {
@@ -136,6 +142,32 @@ class RemoteControl {
       this.dom.staticOverlay.hidden = false;
       this._loadingStaticTimer = setTimeout(() => this._hideLoadingStatic(), 6000);
     }
+  }
+
+  /**
+   * Sur certains navigateurs mobiles, la lecture automatique lancée depuis
+   * onReady (donc de façon asynchrone, après le chargement de l'iframe
+   * YouTube — pas dans le même geste utilisateur synchrone que le clic de
+   * démarrage) ne démarre parfois tout simplement jamais : la télé reste
+   * allumée mais rien ne joue, jusqu'à ce qu'on éteigne/rallume à la main
+   * (ce qui, lui, appelle playVideo() directement dans un clic — et
+   * fonctionne). Ce filet reproduit ce déclic automatiquement : si la
+   * lecture n'a toujours pas démarré après quelques secondes, on retente
+   * play() nous-mêmes, plusieurs fois si besoin.
+   */
+  _startAutoplayWatchdog() {
+    const MAX_ATTEMPTS = 5;
+    let attempts = 0;
+    const check = () => {
+      if (!this.power) return; // éteinte entre-temps : pas concerné
+      const state = this.player.getPlayerState();
+      if (state === 1 || state === 3) return; // PLAYING ou BUFFERING : ça avance déjà
+      if (attempts >= MAX_ATTEMPTS) return;
+      attempts++;
+      this.player.play();
+      setTimeout(check, 1500);
+    };
+    setTimeout(check, 1500);
   }
 
   _hideLoadingStatic() {
@@ -286,6 +318,7 @@ class RemoteControl {
     this._minigameManual = false; // désormais piloté par la pub, pas par un clic manuel
     this._inAdSequence = true;
     this._adSkipAttempts = 0;
+    if (this.dom.adWaitingOverlay) this.dom.adWaitingOverlay.hidden = false;
     this._tryAdSkip();
   }
 
@@ -294,13 +327,17 @@ class RemoteControl {
    * dans l'espoir que YouTube ne resserve pas de pub cette fois-ci (rien ne
    * le garantit — YouTube n'expose aucune API pour lire/sauter une pub,
    * voir la note en tête de fichier — mais un rechargement redemande
-   * simplement la vidéo depuis le début, ce qui peut suffire). Retente
-   * ainsi plusieurs fois avant d'abandonner : au-delà, cette vidéo précise
-   * sert peut-être systématiquement une pub, et on laisse le mini-jeu
-   * habituel occuper l'attente plutôt que de recharger indéfiniment.
+   * simplement la vidéo depuis le début, ce qui peut suffire). En pratique
+   * ça ne marche qu'environ une tentative sur quatre : il faut donc pas mal
+   * insister avant d'abandonner. Pendant ce temps, #ad-waiting-overlay
+   * masque le grésillement des rechargements successifs derrière un
+   * message clair plutôt que de laisser voir la vidéo sauter dans tous les
+   * sens. Au-delà du nombre max de tentatives, cette vidéo précise sert
+   * peut-être systématiquement une pub, et on laisse le mini-jeu habituel
+   * occuper l'attente plutôt que de recharger indéfiniment.
    */
   _tryAdSkip() {
-    const MAX_AD_SKIP_ATTEMPTS = 4;
+    const MAX_AD_SKIP_ATTEMPTS = 20;
     if (!this._inAdSequence) return;
     if (this._adSkipAttempts >= MAX_AD_SKIP_ATTEMPTS) {
       this._showAdMinigame();
@@ -315,6 +352,7 @@ class RemoteControl {
   }
 
   _showAdMinigame() {
+    if (this.dom.adWaitingOverlay) this.dom.adWaitingOverlay.hidden = true;
     if (this.dom.minigameHint) this.dom.minigameHint.textContent = "📺 Pub en cours — petite pause jeu !";
     this.dom.minigameOverlay.hidden = false;
     this.minigameOverlay.show();
@@ -323,6 +361,7 @@ class RemoteControl {
   _onAdSequenceEnd() {
     this._inAdSequence = false;
     clearTimeout(this._adSkipTimer);
+    if (this.dom.adWaitingOverlay) this.dom.adWaitingOverlay.hidden = true;
     // Ne referme pas une session ouverte à la main (chat noir cliqué) : elle
     // ne dépend pas de la pub, seule la pub qui vient de se terminer doit
     // fermer la sienne.

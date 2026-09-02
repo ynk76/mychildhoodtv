@@ -251,6 +251,10 @@ function initCinemaMode(fitStage) {
     setTimeout(() => fullscreenBtn.classList.remove("cinema-fullscreen-btn--unavailable"), 1500);
   }
 
+  function anyFullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || null;
+  }
+
   if (fullscreenBtn) {
     fullscreenBtn.addEventListener("click", () => {
       // On demande le plein écran sur #tv-screen (notre propre élément),
@@ -280,7 +284,19 @@ function initCinemaMode(fitStage) {
           /* on essaie la cible suivante */
         }
       }
-      if (!succeeded) flashFullscreenUnavailable();
+      if (!succeeded) {
+        flashFullscreenUnavailable();
+        return;
+      }
+      // Sur certains navigateurs (WebKit mobile en particulier), l'appel
+      // peut ne renvoyer ni erreur ni Promise rejetée et pourtant ne JAMAIS
+      // passer en plein écran (silencieusement no-op) — le cas exact
+      // signalé comme "on clique et rien ne se passe". On vérifie donc
+      // pour de vrai, un instant plus tard, que le plein écran a
+      // réellement démarré.
+      setTimeout(() => {
+        if (!anyFullscreenElement()) flashFullscreenUnavailable();
+      }, 700);
     });
   }
 
@@ -318,6 +334,7 @@ function initApp() {
     screen: document.getElementById("tv-screen"),
     powerOff: document.getElementById("power-off-overlay"),
     staticOverlay: document.getElementById("static-overlay"),
+    adWaitingOverlay: document.getElementById("ad-waiting-overlay"),
     banner: document.getElementById("channel-banner"),
     bannerName: document.getElementById("channel-banner-name"),
     settingsToggle: document.getElementById("settings-toggle"),

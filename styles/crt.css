@@ -176,6 +176,49 @@
   }
 }
 
+/* Écran d'attente pendant qu'on retente le chargement pour éviter une pub
+   (voir _tryAdSkip() dans scripts/remote.js) : remplace le grésillement brut
+   du rechargement répété (flashs gris, vidéo qui saute) par un message
+   clair — le rechargement continue en arrière-plan, invisible ici. */
+.ad-waiting-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  background: #0c0a12;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  text-align: center;
+  pointer-events: none;
+}
+.ad-waiting-overlay[hidden] {
+  display: none;
+}
+.ad-waiting-overlay__icon {
+  font-size: 1.8rem;
+  animation: ad-waiting-pulse 1.4s ease-in-out infinite;
+}
+.ad-waiting-overlay__text {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+  color: #fff8ec;
+  opacity: 0.9;
+}
+@keyframes ad-waiting-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
 /* Écran de veille (screensaver) : le canvas est affiché/masqué directement
    par scripts/screensaver.js (display block/none) ; l'overlay transparent
    par-dessus sert juste à capter le clic qui referme la veille. */
