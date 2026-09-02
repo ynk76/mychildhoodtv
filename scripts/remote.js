@@ -94,10 +94,12 @@ class RemoteControl {
       onStateChange: (e) => {
         if (e.data === YT.PlayerState.PLAYING) {
           this._hideLoadingStatic();
-          if (!this._initialVolumeApplied) {
-            this._initialVolumeApplied = true;
-            this._applyVolumeState();
-          }
+          // Ne jamais réactiver le son tant que l'écran de démarrage est
+          // encore affiché (voir onBootDismissed) : la vidéo peut très bien
+          // démarrer sa lecture (silencieuse) pendant que ce cache noir est
+          // encore visible, et il ne faut pas qu'on l'entende avant même
+          // d'avoir vu le salon.
+          if (this._bootDismissed) this._applyInitialVolumeOnce();
         }
       },
     });
@@ -176,6 +178,28 @@ class RemoteControl {
       this._loadingStaticTimer = null;
     }
     this.dom.staticOverlay.hidden = true;
+  }
+
+  _applyInitialVolumeOnce() {
+    if (this._initialVolumeApplied) return;
+    this._initialVolumeApplied = true;
+    this._applyVolumeState();
+  }
+
+  /**
+   * Appelé une fois l'écran de démarrage refermé (voir scripts/main.js).
+   * La lecture démarre dès que possible en parallèle de cet écran, donc
+   * potentiellement bien avant qu'il ne se referme — sans ce filet, le son
+   * ne serait réactivé qu'à la prochaine transition d'état du lecteur
+   * (parfois bien après), au lieu de dès que l'utilisateur voit enfin le
+   * salon.
+   */
+  onBootDismissed() {
+    this._bootDismissed = true;
+    // Sans effet audible si la vidéo n'a pas encore commencé à jouer (juste
+    // une réactivation "à l'avance" du son, sinon appliquée normalement dès
+    // la prochaine PLAYING — voir le onStateChange du constructeur).
+    if (this.power) this._applyInitialVolumeOnce();
   }
 
   /** Reçu de Firebase : l'admin a choisi/avancé/mis en pause la diffusion, pour tout le monde. */
@@ -294,15 +318,13 @@ class RemoteControl {
     if (this.power) {
       this.player.play();
       this._showBanner(this.currentChannel());
-      // Cas rare : la TV était déjà éteinte au chargement (power=false en
-      // storage), la vidéo n'a donc jamais atteint l'état PLAYING pour
-      // déclencher l'application différée du son (voir onStateChange dans
-      // le constructeur) — on s'assure ici qu'elle l'a bien été au moins
-      // une fois, sinon le son resterait coupé indéfiniment malgré l'allumage.
-      if (!this._initialVolumeApplied) {
-        this._initialVolumeApplied = true;
-        this._applyVolumeState();
-      }
+      // Cas rare : la télé était déjà éteinte au chargement, la vidéo n'a
+      // donc jamais atteint l'état PLAYING pour déclencher l'application
+      // différée du son (voir onStateChange dans le constructeur) — ce
+      // clic est nécessairement postérieur à l'écran de démarrage (la
+      // télécommande n'est pas cliquable avant), donc sans risque de son
+      // pendant le boot ici.
+      this._applyInitialVolumeOnce();
     } else {
       this.player.pause();
       this._onAdSequenceEnd();
@@ -344,8 +366,15 @@ class RemoteControl {
     if (this._adSkipAttempts >= MAX_AD_SKIP_ATTEMPTS) return;
     this._adSkipAttempts++;
     const channel = this.liveSchedule.channel || this.currentChannel();
+    // player.getPlaylistIndex() peut renvoyer -1/null PENDANT la pub
+    // elle-même (elle ne fait pas partie de la playlist) — donc pile au
+    // moment où on en a besoin. this.adDetector garde le dernier index de
+    // contenu confirmé, fiable même dans ce cas (voir getLastKnownIndex()
+    // dans minigames.js).
     const index = this.player.getPlaylistIndex();
-    if (channel && index != null) this.player.loadPlaylistAt(channel, index, 0);
+    const fallbackIndex = this.adDetector.getLastKnownIndex();
+    const targetIndex = index != null && index >= 0 ? index : fallbackIndex;
+    if (channel && targetIndex != null) this.player.loadPlaylistAt(channel, targetIndex, 0);
     clearTimeout(this._adSkipTimer);
     this._adSkipTimer = setTimeout(() => this._tryAdSkip(), 2500);
   }

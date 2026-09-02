@@ -266,23 +266,14 @@ function initCinemaMode(fitStage) {
 
   if (fullscreenBtn) {
     fullscreenBtn.addEventListener("click", () => {
-      // On demande le plein écran sur <html> (document.documentElement)
-      // EN PREMIER, pas sur #tv-screen : #tv-screen est profondément niché
-      // dans .stage, qui porte en permanence un transform CSS (scale/
-      // rotate) pour la mise à l'échelle du décor — plusieurs moteurs
-      // mobiles (WebKit en tête) acceptent l'appel sans la moindre erreur
-      // sur un élément dans ce cas, mais ne passent jamais réellement en
-      // plein écran. <html> lui-même ne porte aucun transform : c'est le
-      // cas le plus simple et le plus universellement supporté de l'API
-      // (plein écran de toute la page). Comme le mode cinéma zoome déjà
-      // la télé pour remplir tout le viewport, le rendu visuel reste
-      // identique — on gagne juste le plein écran système en plus (barre
-      // d'adresse masquée), et TOUS nos boutons (#cinema-exit compris)
-      // restent visibles/cliquables puisqu'ils sont dans ce même document,
-      // contrairement à un plein écran posé sur un sous-arbre qui les
-      // aurait rendus inatteignables.
+      // Plein écran de la VIDÉO elle-même (l'iframe YouTube), pas de la
+      // page : demander requestFullscreen() directement sur l'iframe fait
+      // passer le LECTEUR YouTube natif en plein écran (comme le ferait
+      // son propre bouton plein écran), pas notre décor. C'est la cible
+      // prioritaire ; #tv-screen (notre conteneur) ne sert que de repli si
+      // jamais l'iframe refusait l'appel pour une raison quelconque.
       const iframe = screen.querySelector("iframe");
-      const targets = [document.documentElement, screen, iframe].filter(Boolean);
+      const targets = [iframe, screen].filter(Boolean);
       let succeeded = false;
       for (const el of targets) {
         const request = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitEnterFullscreen || el.msRequestFullscreen;
@@ -320,17 +311,18 @@ function initCinemaMode(fitStage) {
 
   // Bouton de sortie posé DANS #tv-screen (voir la note dans index.html) :
   // utile UNIQUEMENT si le plein écran a fini par se poser sur #tv-screen
-  // ou l'iframe (repli, voir la liste de cibles ci-dessus) — dans ce cas
+  // lui-même (repli, voir la liste de cibles ci-dessus) — dans ce cas
   // précis, le navigateur ne rend QUE ce sous-arbre et #cinema-exit, en
-  // dehors, devient inatteignable. Quand <html> est la cible (cas normal),
-  // rien n'est masqué et #cinema-exit reste utilisable normalement : pas
-  // besoin de ce bouton en double.
+  // dehors, devient inatteignable. Quand c'est l'iframe qui est la cible
+  // (cas normal), ce bouton est un sibling de l'iframe, donc lui aussi
+  // hors du sous-arbre rendu — inutile de l'afficher, il serait tout aussi
+  // inatteignable (voir Escape/le propre bouton de sortie de YouTube pour
+  // quitter dans ce cas).
   const inlineExitBtn = document.getElementById("fullscreen-exit-inline");
   if (inlineExitBtn) {
     const events = ["fullscreenchange", "webkitfullscreenchange", "MSFullscreenChange"];
     events.forEach((evt) => document.addEventListener(evt, () => {
-      const fsEl = anyFullscreenElement();
-      inlineExitBtn.hidden = !fsEl || fsEl === document.documentElement;
+      inlineExitBtn.hidden = anyFullscreenElement() !== screen;
     }));
     inlineExitBtn.addEventListener("click", exitNativeFullscreenIfAny);
   }
@@ -418,7 +410,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // commencer, au lieu d'attendre que le boot ait fini de se refermer.
   const remote = initApp();
   initBoot(
-    () => {},
+    // Appelé une fois l'écran de démarrage VRAIMENT masqué (fondu de 600ms
+    // terminé, boot.hidden=true) : c'est ici, pas plus tôt, qu'on autorise
+    // le son — sinon on l'entendrait pendant que ce cache est encore
+    // visible (même en train de s'estomper).
+    () => {
+      if (remote) remote.onBootDismissed();
+    },
     () => {
       if (remote && remote.power) remote.player.play();
     }

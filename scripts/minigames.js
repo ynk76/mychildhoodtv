@@ -38,6 +38,7 @@
       this._contentTicks = 0;
       this._inAd = false;
       this._timer = null;
+      this._lastKnownIndex = null;
     }
 
     start() {
@@ -49,16 +50,32 @@
       clearInterval(this._timer);
     }
 
+    /** Dernier index de contenu confirmé (voir _tick()) — plus fiable que
+     *  player.getPlaylistIndex() pendant une pub elle-même, utile à
+     *  RemoteControl._tryAdSkip() pour recharger la bonne vidéo. */
+    getLastKnownIndex() {
+      return this._lastKnownIndex;
+    }
+
     _tick() {
       // this.liveSchedule.index n'est tenu à jour que quand un admin pilote
       // la diffusion (voir LiveSchedule.join()) : en lecture par défaut
       // (chaîne mélangée, sans admin — le cas de la plupart des visiteurs),
       // il reste à null et n'avance jamais avec la playlist. getPlaylistIndex()
-      // interroge directement le lecteur YouTube : toujours à jour, quel que
-      // soit comment on est arrivé à cette vidéo (mélange, avance naturelle,
-      // synchro admin).
-      const index = this.player.getPlaylistIndex();
+      // interroge directement le lecteur YouTube : toujours à jour SUR DU
+      // CONTENU — mais une pub ne fait pas partie de la playlist, et
+      // getPlaylistIndex() peut alors renvoyer -1/null PENDANT MÊME la pub,
+      // c'est-à-dire exactement au moment où la détection doit fonctionner.
+      // On garde donc le dernier index de contenu confirmé (_lastKnownIndex)
+      // et on ne le remplace que par une valeur elle-même valide — sans ça,
+      // la détection s'interrompait juste avant la pub et ne repartait
+      // qu'après, ratant la pub entière.
       const ids = this.player.getPlaylistIds();
+      const rawIndex = this.player.getPlaylistIndex();
+      if (rawIndex != null && rawIndex >= 0 && ids && ids[rawIndex]) {
+        this._lastKnownIndex = rawIndex;
+      }
+      const index = this._lastKnownIndex;
       if (index == null || !ids || !ids[index]) return;
       const expected = ids[index];
       const actual = this.player.getCurrentVideoId();

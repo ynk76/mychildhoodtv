@@ -2580,13 +2580,18 @@ button {
   .tv-set {
     left: 8px;
     top: 14px;
-    width: 342px;
+    /* 342px ne laissait que 4px entre le bord droit de .tv-set__panel et
+       celui du cadre (24px sur desktop, à l'échelle) — bien trop juste,
+       le panneau semblait déborder du cadre. .tv-screen/.tv-set__panel
+       gardent les mêmes valeurs (relatives à cette boîte) : c'est
+       uniquement la marge à droite du panneau qui grandit, de 4px à 12px. */
+    width: 350px;
     height: 236px;
   }
   .tv-set__frame-inner {
     left: 12px;
     top: 10px;
-    width: 318px;
+    width: 326px;
     height: 216px;
   }
   .tv-screen {
