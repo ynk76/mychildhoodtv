@@ -39,6 +39,7 @@
       this._inAd = false;
       this._timer = null;
       this._lastKnownIndex = null;
+      this._lastKnownExpectedId = null;
     }
 
     start() {
@@ -62,22 +63,23 @@
       // la diffusion (voir LiveSchedule.join()) : en lecture par défaut
       // (chaîne mélangée, sans admin — le cas de la plupart des visiteurs),
       // il reste à null et n'avance jamais avec la playlist. getPlaylistIndex()
-      // interroge directement le lecteur YouTube : toujours à jour SUR DU
-      // CONTENU — mais une pub ne fait pas partie de la playlist, et
-      // getPlaylistIndex() peut alors renvoyer -1/null PENDANT MÊME la pub,
-      // c'est-à-dire exactement au moment où la détection doit fonctionner.
-      // On garde donc le dernier index de contenu confirmé (_lastKnownIndex)
-      // et on ne le remplace que par une valeur elle-même valide — sans ça,
-      // la détection s'interrompait juste avant la pub et ne repartait
-      // qu'après, ratant la pub entière.
+      // et getPlaylistIds() interrogent directement le lecteur YouTube :
+      // à jour SUR DU CONTENU — mais une pub ne fait pas partie de la
+      // playlist, et l'un comme l'autre peuvent renvoyer -1/null/vide
+      // PENDANT MÊME la pub, c'est-à-dire exactement au moment où la
+      // détection doit fonctionner. On garde donc le dernier ID de contenu
+      // confirmé (_lastKnownExpectedId, dérivé d'un couple index/ids tous
+      // les deux valides) et on ne le remplace que par une lecture
+      // elle-même complètement valide — sans ça, la détection s'arrêtait
+      // juste avant la pub et ne repartait qu'après, ratant la pub entière.
       const ids = this.player.getPlaylistIds();
       const rawIndex = this.player.getPlaylistIndex();
-      if (rawIndex != null && rawIndex >= 0 && ids && ids[rawIndex]) {
+      if (ids && rawIndex != null && rawIndex >= 0 && ids[rawIndex]) {
         this._lastKnownIndex = rawIndex;
+        this._lastKnownExpectedId = ids[rawIndex];
       }
-      const index = this._lastKnownIndex;
-      if (index == null || !ids || !ids[index]) return;
-      const expected = ids[index];
+      const expected = this._lastKnownExpectedId;
+      if (expected == null) return;
       const actual = this.player.getCurrentVideoId();
       // YouTube restreint souvent l'accès aux métadonnées vidéo pendant une
       // pub (getVideoData()/getCurrentVideoId() renvoie alors null) : un
