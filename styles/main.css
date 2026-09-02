@@ -2620,9 +2620,17 @@ button {
     left: 19px;
   }
   .tv-legs__foot {
-    top: 236px;
+    /* .tv-set (le cadre) commence à top:14px ici et fait 236px de haut,
+       donc se termine à 250px ; .tv-stand__top commence juste après, à
+       254px — un espace de seulement 4px à combler, bien moins que sur
+       desktop (18px). Une hauteur de pied proche du desktop (20-22px)
+       plongeait donc profondément dans l'écran ET le haut du meuble.
+       Pied nettement plus fin ici, avec le même chevauchement "flush"
+       d'environ 2px de chaque côté qu'en desktop, mais adapté au petit
+       espace réel disponible. */
+    top: 248px;
     width: 32px;
-    height: 20px;
+    height: 8px;
   }
   .tv-legs__foot--l {
     left: 70px;

@@ -315,9 +315,13 @@ class RemoteControl {
 
   _onAdSequenceStart() {
     if (!this.power) return;
-    this._minigameManual = false; // désormais piloté par la pub, pas par un clic manuel
     this._inAdSequence = true;
     this._adSkipAttempts = 0;
+    // Affiché tout de suite, dès le tout premier soupçon de pub (voir
+    // START_DEBOUNCE_TICKS=1 dans minigames.js) : mieux vaut un très rare
+    // faux positif (masqué puis retiré aussitôt si le contenu reprend) que
+    // laisser voir le grésillement brut pendant que la détection se
+    // confirme.
     if (this.dom.adWaitingOverlay) this.dom.adWaitingOverlay.hidden = false;
     this._tryAdSkip();
   }
@@ -329,20 +333,15 @@ class RemoteControl {
    * voir la note en tête de fichier — mais un rechargement redemande
    * simplement la vidéo depuis le début, ce qui peut suffire). En pratique
    * ça ne marche qu'environ une tentative sur quatre : il faut donc pas mal
-   * insister avant d'abandonner. Pendant ce temps, #ad-waiting-overlay
-   * masque le grésillement des rechargements successifs derrière un
-   * message clair plutôt que de laisser voir la vidéo sauter dans tous les
-   * sens. Au-delà du nombre max de tentatives, cette vidéo précise sert
-   * peut-être systématiquement une pub, et on laisse le mini-jeu habituel
-   * occuper l'attente plutôt que de recharger indéfiniment.
+   * insister avant d'abandonner. Pendant tout ce temps ET même au-delà (si
+   * la pub résiste à toutes les tentatives), #ad-waiting-overlay reste
+   * affiché jusqu'à la fin RÉELLE de la pub (voir _onAdSequenceEnd) —
+   * jamais de retour au grésillement brut entre-temps.
    */
   _tryAdSkip() {
     const MAX_AD_SKIP_ATTEMPTS = 20;
     if (!this._inAdSequence) return;
-    if (this._adSkipAttempts >= MAX_AD_SKIP_ATTEMPTS) {
-      this._showAdMinigame();
-      return;
-    }
+    if (this._adSkipAttempts >= MAX_AD_SKIP_ATTEMPTS) return;
     this._adSkipAttempts++;
     const channel = this.liveSchedule.channel || this.currentChannel();
     const index = this.player.getPlaylistIndex();
@@ -351,23 +350,10 @@ class RemoteControl {
     this._adSkipTimer = setTimeout(() => this._tryAdSkip(), 2500);
   }
 
-  _showAdMinigame() {
-    if (this.dom.adWaitingOverlay) this.dom.adWaitingOverlay.hidden = true;
-    if (this.dom.minigameHint) this.dom.minigameHint.textContent = "📺 Pub en cours — petite pause jeu !";
-    this.dom.minigameOverlay.hidden = false;
-    this.minigameOverlay.show();
-  }
-
   _onAdSequenceEnd() {
     this._inAdSequence = false;
     clearTimeout(this._adSkipTimer);
     if (this.dom.adWaitingOverlay) this.dom.adWaitingOverlay.hidden = true;
-    // Ne referme pas une session ouverte à la main (chat noir cliqué) : elle
-    // ne dépend pas de la pub, seule la pub qui vient de se terminer doit
-    // fermer la sienne.
-    if (this._minigameManual) return;
-    this.dom.minigameOverlay.hidden = true;
-    this.minigameOverlay.hide();
   }
 
   /** Ouvre/ferme les mini-jeux à la demande (clic sur le chat noir), même hors pub. */

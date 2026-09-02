@@ -3,9 +3,12 @@
  * tous les modules (décor, télécommande, écran de veille, plein écran, tchat).
  */
 
-function initBoot(onDone) {
+function initBoot(onDone, onFirstGesture) {
   const boot = document.getElementById("boot-screen");
-  if (!boot) return onDone();
+  if (!boot) {
+    onDone();
+    return;
+  }
 
   let done = false;
   function finish() {
@@ -13,6 +16,12 @@ function initBoot(onDone) {
     done = true;
     Audio2000.unlock();
     Audio2000.startAmbient();
+    // Vrai clic direct de l'utilisateur (contrairement au chargement du
+    // lecteur YouTube, lancé en parallèle de cet écran de boot — voir
+    // DOMContentLoaded plus bas — mais forcément asynchrone) : la
+    // meilleure chance de faire accepter playVideo() par les navigateurs
+    // mobiles les plus stricts si l'autoplay ne s'est pas déjà déclenché.
+    if (typeof onFirstGesture === "function") onFirstGesture();
     boot.classList.add("boot-screen--hidden");
     setTimeout(() => {
       boot.hidden = true;
@@ -257,14 +266,23 @@ function initCinemaMode(fitStage) {
 
   if (fullscreenBtn) {
     fullscreenBtn.addEventListener("click", () => {
-      // On demande le plein écran sur #tv-screen (notre propre élément),
-      // pas directement sur l'iframe YouTube (cross-origin) : certains
-      // navigateurs mobiles refusent silencieusement requestFullscreen()
-      // sur un iframe cross-origin même avec allowfullscreen, alors qu'ils
-      // l'acceptent sur un élément normal de la page (qui contient
-      // l'iframe, donc la vidéo apparaît quand même en grand).
+      // On demande le plein écran sur <html> (document.documentElement)
+      // EN PREMIER, pas sur #tv-screen : #tv-screen est profondément niché
+      // dans .stage, qui porte en permanence un transform CSS (scale/
+      // rotate) pour la mise à l'échelle du décor — plusieurs moteurs
+      // mobiles (WebKit en tête) acceptent l'appel sans la moindre erreur
+      // sur un élément dans ce cas, mais ne passent jamais réellement en
+      // plein écran. <html> lui-même ne porte aucun transform : c'est le
+      // cas le plus simple et le plus universellement supporté de l'API
+      // (plein écran de toute la page). Comme le mode cinéma zoome déjà
+      // la télé pour remplir tout le viewport, le rendu visuel reste
+      // identique — on gagne juste le plein écran système en plus (barre
+      // d'adresse masquée), et TOUS nos boutons (#cinema-exit compris)
+      // restent visibles/cliquables puisqu'ils sont dans ce même document,
+      // contrairement à un plein écran posé sur un sous-arbre qui les
+      // aurait rendus inatteignables.
       const iframe = screen.querySelector("iframe");
-      const targets = [screen, iframe].filter(Boolean);
+      const targets = [document.documentElement, screen, iframe].filter(Boolean);
       let succeeded = false;
       for (const el of targets) {
         const request = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitEnterFullscreen || el.msRequestFullscreen;
@@ -301,16 +319,18 @@ function initCinemaMode(fitStage) {
   }
 
   // Bouton de sortie posé DANS #tv-screen (voir la note dans index.html) :
-  // #cinema-exit, en dehors du sous-arbre fullscreen, devient inatteignable
-  // tant que le plein écran natif est actif. On le montre/masque en
-  // écoutant "fullscreenchange" plutôt qu'au clic sur #cinema-fullscreen,
-  // pour rester correct même si le plein écran est quitté autrement
-  // (touche Échap gérée nativement par le navigateur, geste système...).
+  // utile UNIQUEMENT si le plein écran a fini par se poser sur #tv-screen
+  // ou l'iframe (repli, voir la liste de cibles ci-dessus) — dans ce cas
+  // précis, le navigateur ne rend QUE ce sous-arbre et #cinema-exit, en
+  // dehors, devient inatteignable. Quand <html> est la cible (cas normal),
+  // rien n'est masqué et #cinema-exit reste utilisable normalement : pas
+  // besoin de ce bouton en double.
   const inlineExitBtn = document.getElementById("fullscreen-exit-inline");
   if (inlineExitBtn) {
     const events = ["fullscreenchange", "webkitfullscreenchange", "MSFullscreenChange"];
     events.forEach((evt) => document.addEventListener(evt, () => {
-      inlineExitBtn.hidden = !document.fullscreenElement;
+      const fsEl = anyFullscreenElement();
+      inlineExitBtn.hidden = !fsEl || fsEl === document.documentElement;
     }));
     inlineExitBtn.addEventListener("click", exitNativeFullscreenIfAny);
   }
@@ -385,8 +405,22 @@ function initApp() {
     // une dépendance à window.YT étant déjà chargé à cet instant précis.
     isPaused: () => remote.player.getPlayerState() === 2,
   });
+
+  return remote;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  initBoot(initApp);
+  // initApp() lance tout de suite le chargement du lecteur YouTube (API +
+  // création du player), EN PARALLÈLE de l'écran de boot (lui-même un
+  // simple cache opaque par-dessus tout le décor, voir .boot-screen dans
+  // styles/crt.css — rien n'est donc visible en dessous entre-temps) :
+  // plus ce chargement démarre tôt, plus vite la lecture peut réellement
+  // commencer, au lieu d'attendre que le boot ait fini de se refermer.
+  const remote = initApp();
+  initBoot(
+    () => {},
+    () => {
+      if (remote && remote.power) remote.player.play();
+    }
+  );
 });

@@ -1,6 +1,7 @@
 /**
  * ============================================================================
- *  Détection de publicité (best-effort) + mini-jeux pendant les pubs.
+ *  Détection de publicité (best-effort) — voir _tryAdSkip()/#ad-waiting-
+ *  overlay dans scripts/remote.js pour ce qui se passe une fois détectée.
  * ============================================================================
  *  YouTube n'expose aucune API officielle pour détecter une publicité
  *  (volontaire de leur part, pour protéger leurs revenus pub). L'heuristique
@@ -10,15 +11,22 @@
  *  ne correspond pas à celle attendue à l'index en cours, c'est
  *  probablement qu'une pub (ou un enchaînement de plusieurs pubs) est en
  *  train de jouer. Une ou plusieurs pubs qui se suivent sans retour au
- *  contenu entre les deux comptent comme UNE seule "séquence" de pub — un
- *  seul mini-jeu est proposé pour toute la séquence, jusqu'au retour du
- *  contenu normal.
+ *  contenu entre les deux comptent comme UNE seule "séquence" de pub —
+ *  jusqu'au retour du contenu normal.
  * ============================================================================
  */
 
 (function () {
-  const POLL_MS = 500;
-  const DEBOUNCE_TICKS = 2; // évite de réagir à un simple instant de transition
+  const POLL_MS = 300;
+  // Démarrage détecté DÈS le premier tick suspect : montrer l'écran "PUB"
+  // tout de suite, quitte à le retirer aussitôt en cas de faux positif
+  // (transition normale entre deux vidéos de la playlist), vaut bien mieux
+  // que laisser voir la pub brute pendant que le debounce confirme. La FIN
+  // d'une pub, elle, garde un vrai debounce : la retirer trop tôt
+  // laisserait revoir un sursaut de pub avant que le contenu ne soit
+  // vraiment stable.
+  const START_DEBOUNCE_TICKS = 1;
+  const END_DEBOUNCE_TICKS = 3; // 3 x 300ms ≈ 900ms, proche de l'ancien réglage
 
   class AdDetector {
     constructor({ player, liveSchedule, onAdSequenceStart, onAdSequenceEnd }) {
@@ -65,14 +73,14 @@
       if (looksAd) {
         this._adTicks++;
         this._contentTicks = 0;
-        if (!this._inAd && this._adTicks >= DEBOUNCE_TICKS) {
+        if (!this._inAd && this._adTicks >= START_DEBOUNCE_TICKS) {
           this._inAd = true;
           if (typeof this.onAdSequenceStart === "function") this.onAdSequenceStart();
         }
       } else {
         this._contentTicks++;
         this._adTicks = 0;
-        if (this._inAd && this._contentTicks >= DEBOUNCE_TICKS) {
+        if (this._inAd && this._contentTicks >= END_DEBOUNCE_TICKS) {
           this._inAd = false;
           if (typeof this.onAdSequenceEnd === "function") this.onAdSequenceEnd();
         }

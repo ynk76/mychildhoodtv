@@ -163,8 +163,13 @@
               <div class="power-off-overlay__scan"></div>
             </div>
             <div id="ad-waiting-overlay" class="ad-waiting-overlay" hidden aria-hidden="true">
-              <span class="ad-waiting-overlay__icon">📺</span>
-              <span class="ad-waiting-overlay__text">PUB — merci de patienter…</span>
+              <span class="ad-waiting-overlay__badge">
+                <span class="ad-waiting-overlay__icon">📺</span>
+                <span class="ad-waiting-overlay__label">PUB</span>
+              </span>
+              <span class="ad-waiting-overlay__text"
+                >Merci de patienter<span class="ad-waiting-overlay__dots boot-screen__ellipsis">...</span></span
+              >
             </div>
             <!-- Quand #tv-screen est en plein écran natif (Fullscreen API),
                  le navigateur ne rend QUE ce sous-arbre : #cinema-exit,
